@@ -30,6 +30,8 @@ function PolygonButton (screen, coords, fill, border, action, origin) {
 	}
 
 	this.down = {fill: this.over.fill, burder: border};
+
+	this.disabled = false;
 }
 
 PolygonButton.prototype.coordinates = function () {
@@ -53,13 +55,20 @@ PolygonButton.prototype.redraw = function () {
 	this.polygon.redraw();
 }
 
+// either "disabled" or "active"
+PolygonButton.prototype.update_status = function (status) {
+	this.disabled = (status == "disabled");
+}
+
 PolygonButton.prototype.mouseIn = function () {
+	if (this.disabled) return;
 	this.screen.canvas.style.cursor="pointer"
 	this.polygon.fillColour(this.over.fill.colour);
 	this.polygon.fillAlpha(this.over.fill.alpha);
 }
 
 PolygonButton.prototype.mouseOut = function () {
+	if (this.disabled) return;
 	this.screen.canvas.style.cursor="auto"
 	this.polygon.fillColour(this.away.fill.colour);
 	this.polygon.fillAlpha(this.away.fill.alpha);
@@ -67,6 +76,7 @@ PolygonButton.prototype.mouseOut = function () {
 }
 
 PolygonButton.prototype.click = function (x,y,button,down) {
+	if (this.disabled) return;
 	if (button == "left") {
 		if (down) {
 			// change colour...

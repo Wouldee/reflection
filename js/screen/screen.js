@@ -146,7 +146,9 @@ Screen.prototype.click = function (mouseEvent,buttonDown) {
 		var listener = this.listeners[i];
 		if (listener.inside(x,y)) {
 			// found a listener covering the clicked pixel
-			listener.widget.click(x,y,button,buttonDown);
+			if (listener.widget.click != undefined) {
+				listener.widget.click(x,y,button,buttonDown);
+			}
 			// probably should break....
 		}
 	}
@@ -227,10 +229,26 @@ Screen.prototype.vertical = function (y) {
 	return vertical;
 }
 
+// register a listener for mouse events within the specified area
+// listeners are destroyed when screen.clear() is called
 Screen.prototype.addListener = function(x1,y1,x2,y2,widget) {
 	var listener = new Listener (x1,y1,x2,y2,widget);
 	this.listeners.push(listener);
 	return listener;
+}
+
+Screen.prototype.remove_listener = function(listener) {
+	// remove from listener array, log warning if not present
+	var index = this.listeners.indexOf(listener);
+	if (index == -1) {
+		console.log("removal of non-existent listener requested:",listener);
+	}
+	this.listeners.splice(index,1);
+
+	// check if mouse currently inside the listener
+	if (listener == this.mouseInside) {
+		this.mouseInside = null;
+	}
 }
 
 // draw rectangle on screen at x,y with width and height (all in pixels)

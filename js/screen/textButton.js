@@ -13,6 +13,14 @@ function TextButton (screen,text,x,y,alignment,size,action) {
 	this.listener = screen.addListener(x1,y1,x2,y2,this);
 }
 
+TextButton.prototype.remove = function () {
+	// delete the listener
+	this.screen.remove_listener(this.listener);
+
+	// remove the text
+	this.textItem.remove();
+}
+
 TextButton.prototype.coordinates = function () {
 	if (arguments.length > 0) {
 		this.textItem.coordinates.apply(this.textItem,arguments);
