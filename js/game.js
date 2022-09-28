@@ -57,11 +57,12 @@ function Game (reflection,screen,level,tiling,options) {
 		this.options.yContinuous
 	);
 
-	this.pausePanel = null;
+	this.centralPanel = null;
 
 	this.generated = false;
 	this.tilesFinished = false;
 	this.started = false;
+	this.complete = false;
 	this.generate();
 	this.shuffleGrid();
 	this.grid.draw();
@@ -222,7 +223,7 @@ Game.prototype.drawPanel = function () {
 	game.panel.parMoves = screen.text(this.par.moves,centre,240,"left",10);
 
 	// score
-	game.panel.scoreText = screen.text('0',centre,280,"center",15);
+	game.panel.scoreText = screen.text("SCORE 0",centre,280,"center",15);
 	screen.text("PAR: ",centre,300,"right",10);
 	game.panel.parScore = screen.text(this.par.score,centre,300,"left",10);
 
@@ -448,6 +449,7 @@ Game.prototype.regenerate = function () {
 	this.generated = false;
 	this.tilesFinished = false;
 	this.started = false;
+	this.completed = false;
 	this.paused = false;
 	this.drawGrid();
 	this.grid.clear();
@@ -517,6 +519,7 @@ Game.prototype.find_action = function () {
 
 Game.prototype.toggle_pause = function () {
 	if (!this.started) return;
+	if (this.complete) return;
 	if (this.paused) {
 		this.resume();
 	} else {
@@ -534,51 +537,51 @@ Game.prototype.pause  = function () {
 
 	// disable any scroll buttons
 	if (this.options.xContinuous) {
-		this.scrollButton.left.update_staus("disabled");
-		this.scrollButton.right.update_staus("disabled");
+		this.scrollButton.left.update_status("disabled");
+		this.scrollButton.right.update_status("disabled");
 	} 
 	if (this.options.yContinuous) {
-		this.scrollButton.up.update_staus("disabled");
-		this.scrollButton.down.update_staus("disabled");
+		this.scrollButton.up.update_status("disabled");
+		this.scrollButton.down.update_status("disabled");
 	}
 
 	// cover the grid, and the scroll buttons, with a black rectangle
-	this.pausePanel = {};
+	this.centralPanel = {};
 
 	var x = this.gridOuter.x1;
 	var y = this.gridOuter.y1;
 	var width = this.gridOuter.x2 - this.gridOuter.x1;
 	var height = this.gridOuter.y2 - this.gridOuter.y1;
-	this.pausePanel.frame = this.screen.rectangleItem(x,y,width,height,{colour: "#000000"},null);
+	this.centralPanel.frame = this.screen.rectangle(x,y,width,height,{colour: "#000000"},null);
 
 	var centreX = this.gridOuter.x2 - width/2;
 	var centreY = this.gridOuter.y2 - height/2;
 
 	// display "paused" text
-	this.pausePanel.text = this.screen.textItem("PAUSED",centreX,centreY - 100,"center",30);
+	this.centralPanel.text = this.screen.text("PAUSED",centreX,centreY - 100,"center",30);
 
 	// and a resume button
 	var game = this;
-	this.pausePanel.button = this.screen.textButton("RESUME",centreX,centreY + 100,"center",30,{game.resume();});
+	this.centralPanel.button = this.screen.textButton("RESUME",centreX,centreY + 100,"center",30,function () {game.resume();});
 }
 
 Game.prototype.resume = function () {
 	// remove the pause panel
-	this.pausePanel.button.remove();
-	this.pausePanel.text.remove();
-	this.pausePanel.frame.remove();
-	this.pausePanel = null;
+	this.centralPanel.button.remove();
+	this.centralPanel.text.remove();
+	this.centralPanel.frame.remove();
+	this.centralPanel = null;
 
 	// reactivate the scroll buttons
 	if (this.options.xContinuous) {
-		this.scrollButton.left.update_staus("active");
-		this.scrollButton.right.update_staus("active");
+		this.scrollButton.left.update_status("active");
+		this.scrollButton.right.update_status("active");
 		this.scrollButton.left.redraw();
 		this.scrollButton.right.redraw();
 	} 
 	if (this.options.yContinuous) {
-		this.scrollButton.up.update_staus("active");
-		this.scrollButton.down.update_staus("active");
+		this.scrollButton.up.update_status("active");
+		this.scrollButton.down.update_status("active");
 		this.scrollButton.up.redraw();
 		this.scrollButton.down.redraw();
 	}
@@ -613,8 +616,28 @@ Game.prototype.over = function () {
 	console.log("game over, score = ",this.score(true),"/",this.par.score);
 	this.panel.timer.stop();
 	this.stopScoring();
-	this.panel.scoreText.update(this.score(true));
+	this.panel.scoreText.update("SCORE " + this.score(true));
 	this.complete = true;
+
+	// display result
+	var x = this.gridOuter.x1;
+	var y = this.gridOuter.y1;
+	var width = this.gridOuter.x2 - this.gridOuter.x1;
+	var height = this.gridOuter.y2 - this.gridOuter.y1;
+	this.centralPanel.frame = this.screen.rectangle(x,y,width,height,{colour: "#000000"},null);
+
+	var centreX = this.gridOuter.x2 - width/2;
+	var centreY = this.gridOuter.y2 - height/2;
+
+	// display "paused" text
+	var levelText = "LEVEL" + (this.level == null ? " " : " " + this.level + " ") + "COMPLETE"
+	this.centralPanel.text = this.screen.text(levelText,centreX,centreY - 200,"center",30);
+
+	// display result...
+
+	// and a close button
+	var game = this;
+	this.centralPanel.button = this.screen.textButton("RESUME",centreX,centreY + 100,"center",30,function () {game.resume();});
 }
 
 Game.prototype.updatePar = function (requiredMoves) {
@@ -640,7 +663,7 @@ Game.prototype.startScoring = function () {
 	var game = this;
 	var updateScore = function () {
 		if (game.complete) return;
-		game.panel.scoreText.update(game.score(true));
+		game.panel.scoreText.update("SCORE " + game.score(true));
 	}
 
 	// update each second
