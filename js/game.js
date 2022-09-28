@@ -38,6 +38,8 @@ function Game (reflection,screen,level,tiling,options) {
 		this.scrollButton.up = null
 		this.scrollButton.down = null
 	}
+
+	// listen for any mouse events on the grid area
 	this.listener = this.screen.addListener(this.gridInner.x1,this.gridInner.y1,this.gridInner.x2,this.gridInner.y2,this);
 
 	// register to receive keyboard & resize events
@@ -54,6 +56,8 @@ function Game (reflection,screen,level,tiling,options) {
 		this.options.xContinuous,
 		this.options.yContinuous
 	);
+
+	this.pausePanel = null;
 
 	this.generated = false;
 	this.tilesFinished = false;
@@ -81,46 +85,6 @@ Game.prototype.process_options = function (options) {
 	options.yContinuous = this.tiling.y_continuous(options.yContinuous);
 
 	this.options = options;
-}
-
-Game.prototype.keyPress = function (key) {
-	switch (key) {
-		case "ArrowUp": case "w": case "W":
-			this.scroll_grid("up"); break;
-		case "ArrowRight": case "d": case "D":
-			this.scroll_grid("right"); break;
-		case "ArrowDown": case "s": case "S":
-			this.scroll_grid("down"); break;
-		case "ArrowLeft": case "a": case "A":
-			this.scroll_grid("left"); break;
-		case "p": case "P":
-			this.pause_action(); break;
-		case "f": case "F":
-			this.find_action(); break;
-	}
-}
-
-Game.prototype.find_action = function () {
-	if (this.paused) return;
-	this.grid.find_unlit_node();
-}
-
-Game.prototype.scroll_grid = function (direction) {
-	if (this.paused) return;
-	this.grid.scroll(direction);
-}
-
-Game.prototype.click = function (xPixel,yPixel,mouseButton,buttonDown) {
-	if (!buttonDown) return;
-	if (!this.started) return;
-	if (this.paused) return;
-	var direction = mouseButton == "right" ? "anticlockwise" : "clockwise";
-	if (this.grid.rotateAt(xPixel,yPixel,direction)) {
-		this.moves++;
-		this.updateMoves();
-		this.updateLitCount(this.grid.lit);
-	}
-	// redraw the border, scroll buttons etc...
 }
 
 Game.prototype.resize = function () {
@@ -265,7 +229,7 @@ Game.prototype.drawPanel = function () {
 	// records...
 
 	// buttons
-	game.panel.pauseButton   = screen.textButton('PAUSE (P)', centre,350,'center',20,function () {game.pause_action();});
+	game.panel.pauseButton   = screen.textButton('PAUSE (P)', centre,350,'center',20,function () {game.toggle_pause();});
 	game.panel.newGameButton = screen.textButton('NEW GAME',  centre,400,'center',20,function () {game.regenerate();});
 	game.panel.menuButton    = screen.textButton('MENU',      centre,450,'center',20,function () {game.quit();});
 }
@@ -455,13 +419,6 @@ Game.prototype.redrawScrollButtons = function () {
 	}
 }
 
-Game.prototype.quit = function () {
-	this.panel.timer.stop();
-	this.stopScoring();
-	//this.grid.clear();
-	this.reflection.home();
-}
-
 Game.prototype.gridReady = function () {
 	if (!this.started) this.start();
 }
@@ -504,12 +461,61 @@ Game.prototype.regenerate = function () {
 	this.updateMoves();
 }
 
+Game.prototype.keyPress = function (key) {
+	switch (key) {
+		case "Escape":
+			this.quit; break;
+		case "ArrowUp": case "w": case "W":
+			this.scroll_grid("up"); break;
+		case "ArrowRight": case "d": case "D":
+			this.scroll_grid("right"); break;
+		case "ArrowDown": case "s": case "S":
+			this.scroll_grid("down"); break;
+		case "ArrowLeft": case "a": case "A":
+			this.scroll_grid("left"); break;
+		case "p": case "P":
+			this.toggle_pause(); break;
+		case "f": case "F":
+			this.find_action(); break;
+	}
+}
+
+Game.prototype.click = function (xPixel,yPixel,mouseButton,buttonDown) {
+	if (!buttonDown) return;
+	if (!this.started) return;
+	if (this.paused) return;
+	var direction = mouseButton == "right" ? "anticlockwise" : "clockwise";
+	if (this.grid.rotateAt(xPixel,yPixel,direction)) {
+		this.moves++;
+		this.updateMoves();
+		this.updateLitCount(this.grid.lit);
+	}
+	// redraw the border, scroll buttons etc...
+}
+
+Game.prototype.quit = function () {
+	this.panel.timer.stop();
+	this.stopScoring();
+	//this.grid.clear();
+	this.reflection.home();
+}
+
 Game.prototype.restart = function () {}
 Game.prototype.leftClick = function () {}
 Game.prototype.rightClick = function () {}
 Game.prototype.scroll = function () {}
 
-Game.prototype.pause_action = function () {
+Game.prototype.scroll_grid = function (direction) {
+	if (this.paused) return;
+	this.grid.scroll(direction);
+}
+
+Game.prototype.find_action = function () {
+	if (this.paused) return;
+	this.grid.find_unlit_node();
+}
+
+Game.prototype.toggle_pause = function () {
 	if (!this.started) return;
 	if (this.paused) {
 		this.resume();
@@ -519,29 +525,73 @@ Game.prototype.pause_action = function () {
 }
 
 Game.prototype.pause  = function () {
-	if (this.paused) return;
+	// stop the clock
 	this.panel.timer.stop();
 	this.stopScoring();
 
+	// click events to the grid are disabled by setting the paused status
+	this.paused = true;
+
+	// disable any scroll buttons
+	if (this.options.xContinuous) {
+		this.scrollButton.left.update_staus("disabled");
+		this.scrollButton.right.update_staus("disabled");
+	} 
+	if (this.options.yContinuous) {
+		this.scrollButton.up.update_staus("disabled");
+		this.scrollButton.down.update_staus("disabled");
+	}
+
+	// cover the grid, and the scroll buttons, with a black rectangle
+	this.pausePanel = {};
+
 	var x = this.gridOuter.x1;
 	var y = this.gridOuter.y1;
-	var width = this.gridOuter.x2 - x;
-	var height = this.gridOuter.y2 - y;
+	var width = this.gridOuter.x2 - this.gridOuter.x1;
+	var height = this.gridOuter.y2 - this.gridOuter.y1;
+	this.pausePanel.frame = this.screen.rectangleItem(x,y,width,height,{colour: "#000000"},null);
 
-	// copy the contents of the game screen
-	// also need to capture any mouse clicks so they don't go the grid
+	var centreX = this.gridOuter.x2 - width/2;
+	var centreY = this.gridOuter.y2 - height/2;
 
-	this.pausePanel = this.screen.rectangleButton(x,y,width,height,{colour: "#000000"},null,function () {game.grid.resume();});
+	// display "paused" text
+	this.pausePanel.text = this.screen.textItem("PAUSED",centreX,centreY - 100,"center",30);
 
-	this.paused = true;
+	// and a resume button
+	var game = this;
+	this.pausePanel.button = this.screen.textButton("RESUME",centreX,centreY + 100,"center",30,{game.resume();});
 }
 
 Game.prototype.resume = function () {
-	if (!this.paused) return;
+	// remove the pause panel
+	this.pausePanel.button.remove();
+	this.pausePanel.text.remove();
+	this.pausePanel.frame.remove();
+	this.pausePanel = null;
+
+	// reactivate the scroll buttons
+	if (this.options.xContinuous) {
+		this.scrollButton.left.update_staus("active");
+		this.scrollButton.right.update_staus("active");
+		this.scrollButton.left.redraw();
+		this.scrollButton.right.redraw();
+	} 
+	if (this.options.yContinuous) {
+		this.scrollButton.up.update_staus("active");
+		this.scrollButton.down.update_staus("active");
+		this.scrollButton.up.redraw();
+		this.scrollButton.down.redraw();
+	}
+
+	// redraw the grid
+	this.grid.updateScreen();
+
+	// resume redirecting clicks to the grid
+	this.paused = false;
+
+	// start the clock
 	this.panel.timer.start();
 	this.startScoring();
-	// remove the pause panel....add remove/destroy function to all screen items...
-	this.paused = false;
 }
 
 Game.prototype.findUnlit = function () {}

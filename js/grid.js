@@ -1,4 +1,10 @@
 
+// Merge Grid & TilingGrid into a single class...
+// Remove the reference to the game - grid should do the shuffle...
+// Game should pass in a callback for when the grid is drawn...
+// Also a callback for when a node is lit...
+// Maybe game passes in a callback "object", that has certain functions...
+
 // Create a new grid
 // game = the game object (game.js)
 // screen = screen object (screen.js)
@@ -44,7 +50,7 @@ function Grid (game,screen,tiling,size,innerDimensions,outerDimensions,xContinuo
 	// console.log(this);
 }
 
-// called when game is restarted or new game started while previous game still exists 
+// called when game is restarted or new game started while previous game still exists
 Grid.prototype.clear = function () {
 	delete this.canvas;
 	this.resetProperties();
@@ -714,17 +720,3 @@ Grid.prototype.find_unlit_node = function () {
 
 	setTimeout(redraw_node,200);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
