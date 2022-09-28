@@ -1215,8 +1215,8 @@ ConRegonTile.prototype.drawSource = function (tile) {
 
 	this.drawBeams(tile);
 
-	this.images.source.light[tile.colour].draw();
 	this.images.source.frame.front.draw();
+	this.images.source.light[tile.colour].draw();
 }
 
 ConRegonTile.prototype.drawConnector = function (tile) {
