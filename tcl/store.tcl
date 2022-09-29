@@ -172,6 +172,11 @@ proc game {level_no} {
 }
 
 proc storeFile {level_no} {
+	# check store dir exists (should be in an init proc)
+	if {![file isdirectory $::storeDir]} {
+		file mkdir $::storeDir
+	}
+
 	if {$level_no=="?"} {
 		set filename "random"
 	} else {

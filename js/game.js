@@ -63,6 +63,7 @@ function Game (reflection,screen,level,tiling,options) {
 	this.tilesFinished = false;
 	this.started = false;
 	this.complete = false;
+	this.resultDisplayed = false;
 	this.generate();
 	this.shuffleGrid();
 	this.grid.draw();
@@ -248,6 +249,7 @@ Game.prototype.drawGrid = function () {
 
 Game.prototype.gridDrawn = function () {
 	this.redrawScrollButtons();
+	if (this.complete && !this.resultDisplayed) this.display_result();
 }
 
 Game.prototype.drawXScrollButtons = function () {
@@ -449,7 +451,8 @@ Game.prototype.regenerate = function () {
 	this.generated = false;
 	this.tilesFinished = false;
 	this.started = false;
-	this.completed = false;
+	this.complete = false;
+	this.resultDisplayed = false;
 	this.paused = false;
 	this.drawGrid();
 	this.grid.clear();
@@ -486,6 +489,10 @@ Game.prototype.click = function (xPixel,yPixel,mouseButton,buttonDown) {
 	if (!buttonDown) return;
 	if (!this.started) return;
 	if (this.paused) return;
+	if (this.resultDisplayed && this.centralPanel != null) return;
+
+	console.log("click");
+
 	var direction = mouseButton == "right" ? "anticlockwise" : "clockwise";
 	if (this.grid.rotateAt(xPixel,yPixel,direction)) {
 		this.moves++;
@@ -612,32 +619,87 @@ Game.prototype.updateLitCount = function (litCount) {
 	if (this.lit == this.nodes) this.over();
 }
 
+// called when level is completed
 Game.prototype.over = function () {
-	console.log("game over, score = ",this.score(true),"/",this.par.score);
-	this.panel.timer.stop();
-	this.stopScoring();
-	this.panel.scoreText.update("SCORE " + this.score(true));
+	// flag level as complete
 	this.complete = true;
 
+	// calculate final score
+	var finalScore = this.score(true);
+	console.log("game over, score = ",finalScore,"/",this.par.score);
+
+	// Update side panel
+	// - stop the timer
+	// - stop updating score every second
+	// - update displayed score
+	this.panel.timer.stop();
+	this.stopScoring();
+	this.panel.scoreText.update("SCORE " + finalScore);
+
+	// display result after a short delay
+	// var game = this;
+	// setTimeout(this.display_result(finalScore),50);
+}
+
+Game.prototype.display_result = function () {
+	var finalScore = this.score(true);
+
 	// display result
-	var x = this.gridOuter.x1;
-	var y = this.gridOuter.y1;
-	var width = this.gridOuter.x2 - this.gridOuter.x1;
-	var height = this.gridOuter.y2 - this.gridOuter.y1;
-	this.centralPanel.frame = this.screen.rectangle(x,y,width,height,{colour: "#000000"},null);
+	this.centralPanel = {};
 
-	var centreX = this.gridOuter.x2 - width/2;
-	var centreY = this.gridOuter.y2 - height/2;
+	var width = (this.gridOuter.x2 - this.gridOuter.x1)/2;
+	var height = (this.gridOuter.y2 - this.gridOuter.y1)/2;
+	var leftX = this.gridOuter.x1 + width/2;
+	var topY = this.gridOuter.y1 + height/2;
+	this.centralPanel.frame = this.screen.rectangle(leftX,topY,width,height,{colour: "#000000"},null);
 
-	// display "paused" text
+	console.log("width = "+width+" height = "+height);
+
+	var centreX = this.gridOuter.x2 - width;
+	// var centreY = this.gridOuter.y2 - height/2;
+
+	// display "completed" text
+	y = topY + 50;
 	var levelText = "LEVEL" + (this.level == null ? " " : " " + this.level + " ") + "COMPLETE"
-	this.centralPanel.text = this.screen.text(levelText,centreX,centreY - 200,"center",30);
+	this.centralPanel.title = this.screen.text(levelText,centreX,y,"center",30);
 
-	// display result...
+	// duration vs par
+	y = topY + height/2 - 100;
+	var seconds = this.panel.timer.duration()/1000;
+	var durationText = "TIME: " + format_seconds(seconds) + "/" + format_seconds(this.par.seconds);
+	this.centralPanel.time = this.screen.text(durationText,centreX,y,"center",30);
+
+	// moves vs par
+	y = topY + height/2;
+	var movesText = "MOVES: " + this.moves + "/" + this.par.moves;
+	this.centralPanel.moves = this.screen.text(movesText,centreX,y,"center",30);
+
+	// score vs par
+	y = topY + height/2 + 100;
+	var scoreText = "SCORE: " + finalScore + "/" + this.par.score;
+	this.centralPanel.score = this.screen.text(scoreText,centreX,y,"center",30);
 
 	// and a close button
+	y = topY + height - 50;
 	var game = this;
-	this.centralPanel.button = this.screen.textButton("RESUME",centreX,centreY + 100,"center",30,function () {game.resume();});
+	this.centralPanel.button = this.screen.textButton("CLOSE",centreX,y,"center",30,function () {game.closeCentralPanel();});
+
+	this.resultDisplayed = true;
+}
+
+Game.prototype.closeCentralPanel = function () {
+	// remove the pause panel
+	this.centralPanel.button.remove();
+	this.centralPanel.title.remove();
+	this.centralPanel.time.remove();
+	this.centralPanel.moves.remove();
+	this.centralPanel.score.remove();
+	this.centralPanel.frame.remove();
+	this.centralPanel = null;
+
+	// redraw the grid
+	this.grid.updateScreen();
+
 }
 
 Game.prototype.updatePar = function (requiredMoves) {

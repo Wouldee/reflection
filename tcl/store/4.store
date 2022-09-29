@@ -1,0 +1,63 @@
+snubSquare 2 -sources 6
+snubSquare 2 1 1 21
+0 {sse nee} connector_type double orientation left 1 {nnw sww} shape square all_link_ids {0 1} type connector
+0 {ssw nnw e} connector_type threeway orientation w shape triangle all_link_ids 0 type connector
+0 nne colour blue orientation right 1 see shape square all_link_ids {0 1} type source
+0 sse colour blue orientation e 1 nne shape triangle all_link_ids {0 1 2} 2 w type node
+0 {sse nee} connector_type double orientation left 1 {sww nnw} shape square all_link_ids {0 1} type connector
+0 e colour red orientation w 1 nnw shape triangle all_link_ids {0 1} type source
+0 ssw colour green orientation right 1 nne shape square all_link_ids {0 1 2 3} 2 see type node 3 nww
+0 nne colour green orientation e 1 sse shape triangle all_link_ids {0 1} type source
+0 {sww n} connector_type mirror orientation s shape triangle all_link_ids 0 type connector
+0 nww colour magenta orientation n 1 s shape triangle all_link_ids {0 1 2} 2 nee type node
+0 {sww see n} connector_type threeway orientation s shape triangle all_link_ids 0 type connector
+0 s colour blue orientation n 1 nww shape triangle all_link_ids {0 1 2} 2 nee type node
+0 {ssw see nne} connector_type threeway orientation right shape square all_link_ids 0 type connector
+0 {w nne sse} connector_type threeway orientation e shape triangle all_link_ids 0 type connector
+0 nnw colour blue orientation left 1 nee shape square all_link_ids {0 1 2 3} 2 sse type node 3 sww
+0 ssw colour red orientation w 1 nnw shape triangle all_link_ids {0 1 2} 2 e type node
+0 {ssw nne} connector_type straight orientation right 1 {nww see} shape square all_link_ids {0 1} type connector
+0 {w sse nne} connector_type threeway orientation e shape triangle all_link_ids 0 type connector
+0 {nnw nee sse} connector_type threeway orientation left shape square all_link_ids 0 type connector
+0 ssw colour magenta orientation w 1 nnw shape triangle all_link_ids {0 1 2} 2 e type node
+0 {nww nee s} connector_type threeway orientation n shape triangle all_link_ids 0 type connector
+0 n colour blue orientation s 1 see shape triangle all_link_ids {0 1 2} 2 sww type node
+0 nww colour red orientation n 1 nee shape triangle all_link_ids {0 1 2} 2 s type node
+0 sww colour magenta orientation s 1 see shape triangle all_link_ids {0 1 2} 2 n type node
+0 {sww nnw nee} connector_type threeway orientation left shape square all_link_ids 0 type connector
+0 e colour green orientation w 1 ssw shape triangle all_link_ids {0 1 2} 2 nnw type node
+0 see colour green orientation right 1 nne shape square all_link_ids {0 1 2 3} 2 ssw type node 3 nww
+0 sse colour green orientation e 1 nne shape triangle all_link_ids {0 1 2} 2 w type node
+0 {nee nnw} connector_type mirror orientation left shape square all_link_ids 0 type connector
+0 e colour green orientation w 1 nnw shape triangle all_link_ids {0 1 2} 2 ssw type node
+0 {ssw see nww} connector_type threeway orientation right shape square all_link_ids 0 type connector
+0 {sse nne} connector_type mirror orientation e shape triangle all_link_ids 0 type connector
+0 sww colour blue orientation s 1 see shape triangle all_link_ids {0 1 2} 2 n type node
+0 {nee nww s} connector_type threeway orientation n shape triangle all_link_ids 0 type connector
+0 {see sww n} connector_type threeway orientation s shape triangle all_link_ids 0 type connector
+0 nww colour teal orientation n 1 nee shape triangle all_link_ids {0 1 2} 2 s type node
+0 nne colour green orientation right 1 see shape square all_link_ids {0 1 2 3} 2 ssw type node 3 nww
+0 sse colour green orientation e 1 w shape triangle all_link_ids {0 1} type source
+0 {nnw nee sse sww} connector_type fourway orientation left shape square all_link_ids 0 type connector
+0 nnw colour green orientation w 1 ssw shape triangle all_link_ids {0 1 2} 2 e type node
+0 {see nww} {} {1 2} blue {} orientation right 1 nne green 0 shape square all_link_ids {0 1 2} 2 ssw type filter red {}
+0 {sse w} connector_type mirror orientation e shape triangle all_link_ids 0 type connector
+0 {sse nnw sww} connector_type threeway orientation left shape square all_link_ids 0 type connector
+0 ssw colour green orientation w 1 nnw shape triangle all_link_ids {0 1} type source
+0 nee colour green orientation n 1 nww shape triangle all_link_ids {0 1 2} 2 s type node
+0 sww colour green orientation s 1 see shape triangle all_link_ids {0 1 2} 2 n type node
+0 nww colour blue orientation n 1 s shape triangle all_link_ids {0 1 2} 2 nee type source
+0 n colour blue orientation s 1 see shape triangle all_link_ids {0 1 2} 2 sww type node
+0 5 1 6 7 0 7 4 2 6 1 2 0 7 0 0 2 1 0 0 2 0 1 0 0 4 3 1 0 0 1 4 2 2 0 3 2 1 0 2 4 1 2 5 1 2 6 1 3 0 1 4 0 3 4 4 1 4 6 0 4 7 0 5 2 2 5 4 2 6 2 1 6 4 1 6 5 2 6 6 3
+rotate 0 3 2 1
+rotate 1 4 4 -1
+rotate 4 6 6 1
+rotate 4 6 5 1
+scrollx 9 1
+scrollx 9 1
+scrollx 9 1
+scrollx 9 1
+scrollx 9 -1
+scrollx 10 -1
+scrollx 10 -1
+scrollx 10 -1

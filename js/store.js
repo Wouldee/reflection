@@ -19,14 +19,28 @@ request.addEventListener("upgradeneeded", (e) => {
 Database schema:
 
 table GAME
+column ID int
 column LEVEL int
 column X_CONTINUOUS boolean
 column Y_CONTINUOUS boolean
-column SOURCES 
+column SOURCES string
+column RED string
+column GREEN string
+column BLUE string
+column GROWTH string
+column MIX string
+column FILTER boolean
+column PRISM string
 
 table MOVE
+column GAME_ID int
+column SEQUENCE int
+column TILE_X int
+column TILE_Y int
+column rotation int
 
 table TILE
+column GAME_ID int
 column X int
 column Y int
 column SHAPE string
@@ -35,10 +49,17 @@ column FORM string
 column COLOUR string
 
 table FACE
+column GAME_ID int
 column TILE_X int
 column TILE_Y int
 column ID int
 column DIRECTION string
+
+table RECORD
+column GAME_ID int
+column TIME int
+column MOVES int
+column SCORE float
 
 
 request.addEventListener("error" () => console.error("Database failed to open"))

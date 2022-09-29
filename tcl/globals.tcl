@@ -16,8 +16,9 @@ set storeDir "./store"
 
 # height should ideally be sqrt(3)*(width-200)/2
 # and width should be 2*height/sqrt(3) + 200
-set width 1100
-set height 700
+set screenwidth [winfo vrootwidth .]
+set width [expr {max($screenwidth/2,1100)}]
+set height [expr {round(sqrt(3)*2*($width)/5)}]
 
 # square roots
 set Q2 [expr {sqrt(2)}]

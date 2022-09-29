@@ -1,0 +1,19 @@
+triangular 2 -sources 1 -rgb g
+triangular 2 0 0 4
+0 see colour green orientation s 1 sww shape triangle all_link_ids {0 1 2} 2 n type node
+0 n colour green orientation s 1 see shape triangle all_link_ids {0 1 2} 2 sww type node
+0 {n see} connector_type mirror orientation s shape triangle all_link_ids 0 type connector
+0 n colour green orientation s 1 see shape triangle all_link_ids {0 1 2} 2 sww type node
+0 {see sww} connector_type mirror orientation s shape triangle all_link_ids 0 type connector
+0 {nee s nww} connector_type threeway orientation n shape triangle all_link_ids 0 type connector
+0 {nee s} connector_type mirror orientation n shape triangle all_link_ids 0 type connector
+0 {nww s} connector_type mirror orientation n shape triangle all_link_ids 0 type connector
+0 {see sww} connector_type mirror orientation s shape triangle all_link_ids 0 type connector
+0 {nee s nww} connector_type threeway orientation n shape triangle all_link_ids 0 type connector
+0 {n sww} connector_type mirror orientation s shape triangle all_link_ids 0 type connector
+0 n colour green orientation s 1 see shape triangle all_link_ids {0 1 2} 2 sww type node
+0 sww colour green orientation s shape triangle all_link_ids 0 type source
+0 {nee s nww} connector_type threeway orientation n shape triangle all_link_ids 0 type connector
+0 {n sww} connector_type mirror orientation s shape triangle all_link_ids 0 type connector
+0 {nee s} connector_type mirror orientation n shape triangle all_link_ids 0 type connector
+3 0 2 0 2 2 1 0 0 1 1 0 1 2 0 1 3 1 2 0 2 2 1 1 2 2 2 3 1 1 3 2 1 3 3 2
