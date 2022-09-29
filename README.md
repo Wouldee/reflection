@@ -22,4 +22,4 @@ https://en.wikipedia.org/wiki/List_of_k-uniform_tilings
 
 Not yet deployed
 
-The tcl folder contains an earlier demo version of the game, written in Tcl/Tk. Can be downloaded & run on Windows/linux/mac desktop by installing a Tcl/Tl interpreter, then running "wish reflection.tcl" from inside the reflection/tcl folder
+The tcl folder contains an earlier demo version of the game, written in Tcl/Tk. Can be downloaded & run on desktop by installing a Tcl/Tl interpreter, then running "wish reflection.tcl" from inside the reflection/tcl folder
