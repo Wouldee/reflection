@@ -14,6 +14,7 @@ Rotate mirrors to connect coloured light sources to nodes
 - truncated squares (octagons & squares)
 - truncated hexagonal (dodecagons & triangles)
 - truncated tri-hexagonal (dodecagons, hexagons & squares)
+
 https://en.wikipedia.org/wiki/List_of_k-uniform_tilings
 
 Not yet deployed
