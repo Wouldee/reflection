@@ -1,6 +1,7 @@
 # reflection
 
 Web browser puzzle game, written in javascript
+
 Rotate mirrors to connect coloured light sources to nodes
 
 10 different tilings:
