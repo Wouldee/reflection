@@ -2,7 +2,7 @@
 
 Web browser puzzle game, written in javascript
 
-Rotate mirrors to connect coloured light sources to nodes. Partially inspired by two games:
+Rotate mirrors to connect coloured light sources to nodes. Partially inspired by two earlier games:
 - Colourshift (online flash game): https://www.kongregate.com/games/mrsneeze/colourshift
 - Chromatron (desktop): https://silverspaceship.com/chromatron/
 
