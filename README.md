@@ -2,7 +2,7 @@
 
 Web browser puzzle game, written in javascript
 
-Rotate mirrors to connect coloured light sources to nodes. Partially inspired by two games:
+Rotate mirrors to connect coloured light sources to nodes. Partially inspired by two earlier games:
 - Colourshift (online flash game): https://www.kongregate.com/games/mrsneeze/colourshift
 - Chromatron (desktop): https://silverspaceship.com/chromatron/
 
@@ -20,6 +20,6 @@ Rotate mirrors to connect coloured light sources to nodes. Partially inspired by
 
 https://en.wikipedia.org/wiki/List_of_k-uniform_tilings
 
-Not yet deployed
+Not yet deployed. Can only be run via a web server
 
 The tcl folder contains an earlier demo version of the game, written in Tcl/Tk. Can be downloaded & run on desktop by installing a Tcl/Tk interpreter, then running "wish reflection.tcl" from inside the reflection/tcl folder
