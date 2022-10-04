@@ -4,14 +4,11 @@ function Reflection () {
 	var width = document.body.clientWidth; //document.width is obsolete
     var height = document.body.clientHeight; //document.height is obsolete	var width = Math.max(window.innerWidth - 50,800);
 
-	height = Math.max(window.innerHeight - 50,500);
-
-	//width = Math.min(width,3*height/2);
-	//height = Math.min(height,2*width/3);
-
 	// console.log("width",width,"height",height);
 
 	this.screen = new Screen('canvas','#000000');
+
+	this.store = new ClientStore();
 
 	this.shapes = {};
 	this.shapesLoadedCount = 0;
@@ -209,7 +206,7 @@ Reflection.prototype.play = function (levelNo,gameOptions) {
 
 	// console.log("play",levelNo,gameOptions);
 
-	new Game(this,this.screen,levelNo,tiling,gameOptions);
+	new Game(this,this.screen,this.store,levelNo,tiling,gameOptions);
 }
 
 init();

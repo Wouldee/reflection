@@ -3,7 +3,7 @@
 function init () {
 	HOST = "localhost"
 	SHUFFLE = true;
-	ROTATE = true;
+	ROTATE = false;
 	Q2 = Math.sqrt(2);
 	Q3 = Math.sqrt(3);
 	RAD = Math.PI/180;
@@ -17,12 +17,12 @@ function init () {
 	LOG = {
 		"screen": 0,
 		"game": 0,
-		"generate": 2,
+		"generate": 0,
 		"filter": 0,
 		"grid": 0,
 		"image": 0,
-		"path": 0,
-		"tile": 0,
+		"path": 3,
+		"tile": 3,
 		"triangular": 0,
 		"squares": 0,
 		"long-tri": 0,

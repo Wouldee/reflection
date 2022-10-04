@@ -1,6 +1,6 @@
 
 // arguments
-function Game (reflection,screen,level,tiling,options) {
+function Game (reflection,screen,store,level,tiling,options) {
 	var game = this;
 	this.reflection = reflection;
 	this.screen = screen;
@@ -15,6 +15,8 @@ function Game (reflection,screen,level,tiling,options) {
 	this.paused = false;
 
 	// saved game...
+	// if (store.load_game(this)) {
+	// }
 
 	// determine the size of the border, side panel etc
 	this.calculateDimensions();

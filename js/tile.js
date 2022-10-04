@@ -416,7 +416,7 @@ Tile.prototype.unique_colours = function () {
 // newLinks will only contain the linkIds of links that will be different after rotation
 // return value is the size of newArms, i.e how many links will be different after rotation
 Tile.prototype.rotated_links = function (rotation,newLinks) {
-	game_log("tile",1,"find "+this.linkCount+" link positions after rotating by",rotation);
+	game_log("tile",1,this.description()+": find "+this.linkCount+" link positions after rotating by",rotation);
 	rotation = modulo(rotation,this.shape.sides);
 	var changedLinks = 0;
 
@@ -519,7 +519,7 @@ Tile.prototype.rotated_links = function (rotation,newLinks) {
 // return the absolute rotation
 // change this to remove any paths before adding any new ones, performance be damned
 Tile.prototype.rotate = function (rotation,newLinks) {
-	game_log("tile",1,"rotate tile links",rotation,newLinks);
+	game_log("tile",1,"rotate "+this.description()+" links",rotation,newLinks);
 
 	// nodes can't be rotated
 	if (this.isNode) return 0;
