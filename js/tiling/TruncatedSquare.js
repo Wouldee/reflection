@@ -2,6 +2,7 @@
 function TruncatedSquare (shapes) {
 	this.name = "Truncated Square Tiling";
 	this.id = "truncated-square";
+	this.no = 9;
 	this.xContinuous = true;
 	this.yContinuous = true;
 	this.filters = null;

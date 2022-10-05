@@ -1,5 +1,5 @@
-// separate this out to a "generator" object or something...
-// Game object is too big...
+// separate this out to a "generator" object or something~~~
+// Game object is too big~~~
 
 Game.prototype.generate = function () {
 	this.complete = false;
@@ -8,7 +8,8 @@ Game.prototype.generate = function () {
 	var tileCount = this.tiling.tiles(this.grid.size);
 
 	// parse options for growth, sources, colours, and mixing
-	var growth = this.options.growth; //parsing? ...
+	// move this logic to game.process_options~~~
+	var growth = this.options.growth; //parsing? ~~~
 	var sourceCount = this.parse_sources(tileCount);
 	var sourceColours = this.parse_colours(sourceCount);
 	var [mixPathsMax,mixNodesMax] = this.parse_mix(sourceCount, sourceColours);
@@ -16,7 +17,7 @@ Game.prototype.generate = function () {
 	// array of x,y of each tile created
 	var tiles = [];
 
-	// if prism option is true, add three sources and a prism...
+	// if prism option is true, add three sources and a prism~~~
 	if (this.options.prism != null) {
 		tiles.push(...this.create_prism(this.options.prism));
 		sourceColours.red--;
@@ -48,8 +49,8 @@ Game.prototype.generate = function () {
 			if (newTiles.length > 0) {
 				// a new arm was successfully added
 				// add the new tile(s) to the list
-				// maybe only add the last new tile...
-				// need to remove duplicates....
+				// maybe only add the last new tile~~~
+				// need to remove duplicates~~~
 				tiles = tiles.concat(newTiles);
 				empty--;
 				continue;
@@ -69,7 +70,7 @@ Game.prototype.generate = function () {
 		var type = this.type_tile(x,y);
 	}
 
-	//empty seems to always be 1 more than it should be at this point but I can't see why because I'm tired...
+	//empty seems to always be 1 more than it should be at this point but I can't see why because I'm tired~~~
 	// console.log(empty,"empty tiles remain");
 	if (empty > 0) this.grid.fillInTheBlanks();
 
@@ -166,7 +167,7 @@ Game.prototype.parse_colours = function (sourceCount) {
 			throw "Invalid value for colour '"+colour+"' : '"+proportion+"'";
 		}
 
-		// update the total proportion (restrict to 1 - should throw an error...)
+		// update the total proportion (restrict to 1 - should throw an error~~~)
 		totalProportion += proportion;
 		if (totalProportion > 1) totalProportion = 1;
 
@@ -201,7 +202,7 @@ Game.prototype.parse_mix = function (sourceCount, colours) {
 	var mix = this.options.mix;
 	if (mix == "none") return [0,0];
 
-	// validate mix option - should be none, path, node or both...
+	// validate mix option - should be none, path, node or both~~~
 
 	// mix counts depends on how many colours there are,
 	// how many sources there are,

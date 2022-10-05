@@ -43,7 +43,7 @@ SidePanel.prototype.draw = function () {
 	screen.text("PAR: ",centre,240,"right",10);
 	game.panel.parMoves = screen.text(this.par.moves,centre,240,"left",10);
 
-	// records...
+	// records~~~
 
 	// buttons
 	game.panel.pauseButton   = screen.textButton('PAUSE (P)', centre,350,'center',20,function () {game.pauseAction();});

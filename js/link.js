@@ -121,7 +121,7 @@ Link.prototype.cutPaths = function (affectedTiles) {
 	}
 }
 
-// not used...
+// not used~~~
 Link.prototype.unique_colours = function () {
 	var colours = [];
 	if (this.colours["red"]   > 0) colours.push("red");

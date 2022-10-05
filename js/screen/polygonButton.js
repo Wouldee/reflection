@@ -21,7 +21,7 @@ function PolygonButton (screen, coords, fill, border, action, origin) {
 
 	this.over = {fill: {}, border: border};
 	if (this.away.fill.alpha == 1) {
-		// increase the colour....
+		// increase the colour~~~
 		this.over.fill.colour = xxx;
 	} else {
 		// increase the alpha
@@ -79,7 +79,7 @@ PolygonButton.prototype.click = function (x,y,button,down) {
 	if (this.disabled) return;
 	if (button == "left") {
 		if (down) {
-			// change colour...
+			// change colour~~~
 		} else {
 			this.action();
 		}

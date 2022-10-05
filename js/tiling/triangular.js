@@ -11,6 +11,7 @@
 function Triangular (shapes) {
 	this.name = "Triangular Tiling";
 	this.id = "triangular";
+	this.no = 1;
 	this.xContinuous = true;
 	this.yContinuous = null;
 	this.filters = false;
@@ -39,7 +40,7 @@ Triangular.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/8));
 }
 
-// not used...
+// not used~~~
 Triangular.prototype.maxSize = function (xPixels,yPixels) {
 	if (this.x_pixels(yPixels,size) < xPixels) {
 		// tile size is restricted by the screen height

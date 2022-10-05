@@ -1,9 +1,9 @@
 
-// Merge Grid & TilingGrid into a single class...
-// Remove the reference to the game - grid should do the shuffle...
-// Game should pass in a callback for when the grid is drawn...
-// Also a callback for when a node is lit...
-// Maybe game passes in a callback "object", that has certain functions...
+// Merge Grid & TilingGrid into a single class~~~
+// Remove the reference to the game - grid should do the shuffle~~~
+// Game should pass in a callback for when the grid is drawn~~~
+// Also a callback for when a node is lit~~~
+// Maybe game passes in a callback "object", that has certain functions~~~
 
 // Create a new grid
 // game = the game object (game.js)
@@ -518,7 +518,7 @@ Grid.prototype.shuffle = function () {
 	var requiredMoves = 0;
 
 	var tileFunction = function (x,y) {
-		// don't rotate sources for now...
+		// don't rotate sources for now~~~
 		//if (grid.tile(x,y).isSource) return;
 		var rotateBy = grid.tiling.randomRotation(x,y);
 		game_log("grid",2,"rotate",x,y,"by",rotateBy);
@@ -562,7 +562,7 @@ Grid.prototype.drawTile = function (x,y,clear) {
 	tile.draw(xPixel,yPixel,true);
 	this.finishDrawing();
 	// restrict drawing to within the outer dimensions of the grid
-	// no longer necessary....
+	// no longer necessary~~~
 	//this.startDrawing();
 	//this.context.beginPath();
 	//this.context.moveTo(this.outerDimensions.x1,this.outerDimensions.y1);
@@ -589,7 +589,7 @@ Grid.prototype.rotateTile = function (x,y,rotateBy,affectedTiles) {
 	var tile = this.tiles[x][y];    // tile object
 	rotateBy = rotateBy || 1;       // how many faces to rotate by, default is 1 clockwise
 
-	//debug....
+	//debug~~~
 	// console.log("rotate tile @",x,y,"by",rotateBy);
 	game_log("grid",1,"rotating tile @ ",x,y);
 	// console.log(tile.log_string());

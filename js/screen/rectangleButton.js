@@ -16,7 +16,7 @@ function RectangleButton (screen, x, y, width, height, fill, border, action, ori
 
 	this.over = {fill: {}, border: border};
 	if (this.away.fill.alpha == 1) {
-		// increase the colour....
+		// increase the colour~~~
 		this.over.fill.colour = xxx;
 	} else {
 		// increase the alpha
@@ -64,7 +64,7 @@ RectangleButton.prototype.mouseOut = function () {
 RectangleButton.prototype.click = function (x,y,button,down) {
 	if (button == "left") {
 		if (down) {
-			// change colour...
+			// change colour~~~
 		} else {
 			this.action();
 		}

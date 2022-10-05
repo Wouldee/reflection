@@ -13,6 +13,7 @@
 function ElongatedTriangular (shapes) {
 	this.name = "Elongated Triangular Tiling";
 	this.id = "elongated-triangular";
+	this.no = 3;
 	this.xContinuous = null;
 	this.yContinuous = true;
 	this.filters = null;

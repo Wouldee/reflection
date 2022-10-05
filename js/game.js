@@ -4,6 +4,7 @@ function Game (reflection,screen,store,level,tiling,options) {
 	var game = this;
 	this.reflection = reflection;
 	this.screen = screen;
+	this.store = store;
 	this.level = level;
 	this.tiling = tiling;
 	this.process_options(options);
@@ -13,10 +14,6 @@ function Game (reflection,screen,store,level,tiling,options) {
 	this.lit = 0;
 	this.par = {};
 	this.paused = false;
-
-	// saved game...
-	// if (store.load_game(this)) {
-	// }
 
 	// determine the size of the border, side panel etc
 	this.calculateDimensions();
@@ -66,14 +63,15 @@ function Game (reflection,screen,store,level,tiling,options) {
 	this.started = false;
 	this.complete = false;
 	this.resultDisplayed = false;
-	this.generate();
-	this.shuffleGrid();
-	this.grid.draw();
+
+	// saved game
+	store.load_game(this, this.grid);
+	// the store will either call loaded or not_loaded
 }
 
 Game.prototype.process_options = function (options) {
 	// options should all be set; throw an error if any missing:
-	for (var required of ["size","size","mix","sources","xContinuous","yContinuous","growth","colours","filter"]) {
+	for (var required of ["size","mix","sources","xContinuous","yContinuous","growth","colours","filter"]) {
 		if (options[required] == undefined) {
 			throw "missing option '"+required+"'"
 		}
@@ -89,6 +87,69 @@ Game.prototype.process_options = function (options) {
 	options.yContinuous = this.tiling.y_continuous(options.yContinuous);
 
 	this.options = options;
+}
+
+// return a string representing the ID of the game, based on
+// the parameters used to create the game
+Game.prototype.id = function () {
+
+	// convert the parameters to a number
+	var id = 0;
+
+	// level - up to 128, bits 0 - 6
+	id += this.level;
+
+	// tiling - up to 32, bits 7 - 11
+	id += this.tiling.no << 7;
+
+	// size - up to 16, bits 12 - 15
+	id += this.tilingSize << 12;
+
+	// continuous & mix - 1 or 0, bits 16 & 17
+	id += this.options.xContinuous << 16;
+	id += this.options.yContinuous << 17;
+
+	// mix - 4 options, bits 18 - 19
+	id += MIXES.indexOf(this.options.mix) << 18;
+
+	// sources, and other options not validated yet~~~
+	// should validate & parse earlier~~~
+
+	// sources - up to 128, and an indicator (1 or 0) bits 20 - 27
+	if (this.options.sources == "Q") {
+		// represent as zero
+	} else if (this.options.sources >= 1) {
+		// an exact number, indicator is zero
+		id += this.options.sources << 20;
+	} else {
+		// between 0 & 1, indicator is 1
+		id += Math.floor(this.options.sources*128) << 20;
+		id += 1 << 27;
+	}
+
+	// growth - up to 8 bits 27 - 29
+	id += GROWTHS.indexOf(this.options.growth) << 28;
+
+	// not yet supported:
+	/* 
+	this.options.colours
+
+	// filter - 1 or 0
+	this.options.filter */
+
+	return id;
+}
+
+Game.prototype.loaded = function () {
+	// game loaded successfully
+	this.grid.draw();
+}
+
+Game.prototype.not_loaded = function () {
+	// no saved game - generate a new one
+	this.generate();
+	this.shuffleGrid();
+	this.grid.draw();
 }
 
 Game.prototype.resize = function () {
@@ -107,7 +168,7 @@ Game.prototype.resize = function () {
 	this.panel.pauseButton.coordinates(centre,350);
 	this.panel.newGameButton.coordinates(centre,400);
 	this.panel.menuButton.coordinates(centre,450);
-	// redraw par...
+	// redraw par~~~
 
 	this.listener.coordinates(this.gridInner.x1,this.gridInner.y1,this.gridInner.x2,this.gridInner.y2);
 
@@ -130,7 +191,7 @@ Game.prototype.resize = function () {
 }
 
 Game.prototype.calculateDimensions = function () {
-	// delete...
+	// delete~~~
 	// hard-coded stuff
 	// distance from edge of canvas to panel and grid borders
 	// this.margin = BORDER_MARGIN;
@@ -230,7 +291,7 @@ Game.prototype.drawPanel = function () {
 	screen.text("PAR: ",centre,300,"right",10);
 	game.panel.parScore = screen.text(this.par.score,centre,300,"left",10);
 
-	// records...
+	// records~~~
 
 	// buttons
 	game.panel.pauseButton   = screen.textButton('PAUSE (P)', centre,350,'center',20,function () {game.toggle_pause();});
@@ -501,7 +562,7 @@ Game.prototype.click = function (xPixel,yPixel,mouseButton,buttonDown) {
 		this.updateMoves();
 		this.updateLitCount(this.grid.lit);
 	}
-	// redraw the border, scroll buttons etc...
+	// redraw the border, scroll buttons etc~~~
 }
 
 Game.prototype.quit = function () {

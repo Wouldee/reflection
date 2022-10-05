@@ -2,6 +2,7 @@
 function RhombiTriHexagonal (shapes) {
 	this.name = "Rhombi-tri-hexagonal Tiling";
 	this.id = "rhombitrihexagonal";
+	this.no = 8;
 	this.xContinuous = true;
 	this.yContinuous = true;
 	this.filters = null;

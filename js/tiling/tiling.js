@@ -1,11 +1,31 @@
 
 function Tiling () {
 	this.name = "Generic Tiling";
+	this.id = "generic-tiling";
+
+	// x & y continuous - booleans
+	// false if the tiling cannot be continuous
+	// true if the tiling must be continuous
+	// null if it can be either
 	this.xContinuous = null;
 	this.yContinuous = null;
+
+	// filters & prism - false if the tiling cannot have filters or prisms, null otherwise
+	// check if these are actually used...delete if not...
 	this.filters = null;
 	this.prisms = null;
+
+	// average number of faces per tile
+	// used?~~~
 	this.faces = 0.0;
+
+	// used to compute difficulty of puzzle
+	// average number of other faces per face
+	// so for triangular tiling complexity is 2, square is 3, hexagonal is 5 etc
+	// e.g truncated hexagonal tiling, there are 2 triangles for every dodecagon
+	// each dodecagon's side has a complexity of 11, and the triangles each have a complexity of 2
+	// there are 12 dodecagon sides for every 6 triangle sides, so we calculate as 12*11 + 6*2 (=144),
+	// divided by 12 + 6, which comes out as exactly 8
 	this.complexity = 0.0;
 }
 
@@ -73,10 +93,12 @@ Tiling.prototype.size_number = function (sizeDescription) {
 	return size;
 }
 
+// minimum width required to fully display each tile
 Tiling.prototype.x_pixels = function (yPixels, size) {
 	return yPixels;
 }
 
+// minimum height required to fully display each tile
 Tiling.prototype.y_pixels = function (xPixels, size) {
 	return xPixels;
 }
@@ -158,6 +180,7 @@ TilingGrid.prototype.centre_tile = function () {
 	return this.tileAt(this.grid.xPixels/2,this.grid.yPixels/2);
 }
 
+// tiling~~~
 TilingGrid.prototype.randomRotation = function (x,y) {
 	return Math.floor(Math.random()*this.shape(x,y).sides);
 }

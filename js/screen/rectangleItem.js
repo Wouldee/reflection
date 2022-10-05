@@ -69,7 +69,7 @@ RectangleItem.prototype.coordinates = function () {
 }
 
 RectangleItem.prototype.remove = function () {
-	// clear/redisplay underneath...
+	// clear/redisplay underneath~~~
 	if (this.border.thickness != undefined) {
 		var x = this.position.x + (this.border.margin - this.border.thickness/2)*this.orientation.x;
 		var y = this.position.y + (this.border.margin - this.border.thickness/2)*this.orientation.y;
@@ -86,12 +86,12 @@ RectangleItem.prototype.remove = function () {
 
 RectangleItem.prototype.resize = function () {
 	this.calculateDimensions();
-	//underneath image needs to be resized also...
+	//underneath image needs to be resized also~~~
 }
 
 // public function
 // redisplay the button
-// should only be called if the button is currently not displayed...
+// should only be called if the button is currently not displayed~~~
 RectangleItem.prototype.redraw = function () {
 	if (this.dimensions.width > 0 && this.dimensions.height > 0) {
 		// grab an image of the canvas area currently occupying the button's area

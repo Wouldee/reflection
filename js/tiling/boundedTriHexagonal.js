@@ -24,6 +24,7 @@
 function BoundedTriHexagonal (shapes) {
 	this.name = "(Bounded) Tri-hexagonal Tiling";
 	this.id = "bounded-trihexagonal";
+	this.no = 6;
 	this.xContinuous = false;
 	this.yContinuous = false;
 	this.filters = null;

@@ -28,7 +28,7 @@ function TextItem (screen, text, x, y, alignment, size, maxWidth) {
 TextItem.prototype.resize = function () {
 	this.position.x = this.screen.horizontal(this.x);
 	this.position.y = this.screen.vertical(this.y);
-	// resize font?....
+	// resize font?~~~
 	this.dimensions.size = parseInt(this.screen.vertical(this.size));
 	this.dimensions.maxWidth = this.screen.horizontal(this.maxWidth);
 	this.applyMaxWidth();

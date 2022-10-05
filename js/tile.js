@@ -205,7 +205,7 @@ Tile.prototype.candidate_faces = function (growth) {
 		// console.log("unfinished connector with initial arm "+direction+" candidates = "+this.candidateFaces);
 	}
 
-	// growth style is irrelevant for sources, or connectors that already have a complete link...
+	// growth style is irrelevant for sources, or connectors that already have a complete link~~~
 	// add directions in a random order
 	this.candidateFaces.push(...remainingDirections);
 	return this.candidateFaces;
@@ -299,7 +299,7 @@ Tile.prototype.paths_in = function (direction) {
 	return pathsIn;
 }
 
-// not used...
+// not used~~~
 // propagate any paths from this tile in the given direction
 // update the hash of affected tiles
 Tile.prototype.propogate_paths = function (direction,affected) {
@@ -371,7 +371,7 @@ Tile.prototype.possible_links = function () {
 
 // convert the tile into a connector
 Tile.prototype.connector = function () {
-	// nothing...
+	// nothing~~~
 	// perhaps set tile.image etc. here?
 }
 
@@ -400,7 +400,7 @@ Tile.prototype.update_lit = function () {
 	}
 }
 
-// not used...
+// not used~~~
 Tile.prototype.unique_colours = function () {
 	var colours = [];
 	if (this.colours.red>0)   colours.push("red");
@@ -436,7 +436,7 @@ Tile.prototype.rotated_links = function (rotation,newLinks) {
 
 	// each link, detmermine position after rotation
 	for (var linkId in this.links) {
-		// shouldn't need to parse....
+		// shouldn't need to parse~~~
 		linkId = parseInt(linkId);
 		var link = this.links[linkId];
 		var colour = link.colour || "none";

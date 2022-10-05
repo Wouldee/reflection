@@ -2,6 +2,7 @@
 function TruncatedTriHexagonal (shapes) {
 	this.name = "Truncated Tri-hexagonal Tiling";
 	this.id = "truncated-trihexagonal";
+	this.no = 11;
 	this.xContinuous = true;
 	this.yContinuous = true;
 	this.filters = null;

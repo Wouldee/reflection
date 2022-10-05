@@ -201,7 +201,7 @@ Game.prototype.mix_paths_to = function (to,cluster,clusters) {
 	if (tile.isSource) {
 		game_log("generate",3,"Attempt to mix to source  @"+tile.x+","+tile.y)
 		// console.log("attempt to mix with source @",to.x,to.y);
-		// check the colour of the source is not already found in the cluster...
+		// check the colour of the source is not already found in the cluster~~~
 		if (cluster.colours[tile.colour] > 0) return false;
 
 		// add a new link
@@ -259,7 +259,7 @@ Game.prototype.mix_paths_to = function (to,cluster,clusters) {
 	} else if (tile.isConnector) {
 		game_log("generate",3,"Attempt to mix to connector  @"+tile.x+","+tile.y)
 		//connector
-		// each link (should be random order...)
+		// each link (should be random order~~~)
 		for (var linkId in tile.links) {
 			var link = tile.links[linkId];
 
@@ -323,7 +323,7 @@ Game.prototype.path_cluster = function (clusters,link) {
 	return cluster;
 }
 
-// not used...
+// not used~~~
 Game.prototype.combined_colours = function (paths,mixedColours) {
 	var colours = {red: 0, green: 0, blue: 0};
 

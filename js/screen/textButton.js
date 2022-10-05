@@ -52,7 +52,7 @@ TextButton.prototype.mouseOut = function () {
 TextButton.prototype.click = function (x,y,button,down) {
 	if (button == "left") {
 		if (down) {
-			// change text colour...
+			// change text colour~~~
 		} else {
 			this.action();
 		}

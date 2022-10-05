@@ -80,7 +80,7 @@ Hexagon.prototype.definePrismForms = function () {
 	// These two are possible in theory but difficult to implement
 	// You have to have blue in one partition, and yellow in the other (so quite rare also)
 	// Creating the prism means adding red and green to a link that was previously blue
-	// That means you're mixing colours, not just filtering, so you have to check that the mix isn't adding any redundancy...
+	// That means you're mixing colours, not just filtering, so you have to check that the mix isn't adding any redundancy~~~
 	// hexagon.prismForms["001122"] = {"regular" : ["00WBGR","00RGBW"]}; // adjacent double adjacent
 	// hexagon.prismForms["002211"] = {"regular" : ["00WBGR","00RGBW"]}; // adjacent double adjacent
 }
@@ -144,7 +144,7 @@ Hexagon.prototype.baseImagesLoaded = function (image) {
 	this.useImage(reversedPrism,["special","prism","regular-reversed" ]);
 }
 
-// unused, delete...
+// unused, delete~~~
 Hexagon.prototype.irregularThreewayImage = function () {
 	var canvas = this.imageCanvas();
 	var context = canvas.getContext("2d");
@@ -362,7 +362,7 @@ HexagonTile.prototype.addAdditionalLinks = function (tile) {
 			break;
 		case "012021" :
 			// double obtuse mirror
-			// same as above, but twice...
+			// same as above, but twice~~~
 			this.addFormLink(tile,tile.rotation,0);
 			this.addFormLink(tile,tile.rotation,3);
 			break;
@@ -371,12 +371,12 @@ HexagonTile.prototype.addAdditionalLinks = function (tile) {
 		case "102021" :
 		case "201012" :
 			// adjacent obtuse double
-			// add a single link arm to the obtuse side, as above...
+			// add a single link arm to the obtuse side, as above~~~
 			this.addFormLink(tile,tile.rotation,3);
 			break;
 		case "001011" :
 		case "011010" :
-			// threeway needs a single link arm too...
+			// threeway needs a single link arm too~~~
 			this.addFormLink(tile,tile.rotation,3);
 			break;
 	}

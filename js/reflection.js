@@ -17,8 +17,8 @@ function Reflection () {
 	var loadedAction = function () { reflection.shape_loaded(); }
 	var progressAction = function (progress,next) { reflection.shape_progress(progress,next); }
 
-	// arrange for the shpes to inform us of how many images they will load...
-	// arrange for them to also inform us of when an image has loaded...
+	// arrange for the shpes to inform us of how many images they will load~~~
+	// arrange for them to also inform us of when an image has loaded~~~
 	this.shapes.triangle = new Triangle(loadedAction,progressAction);
 	this.shapes.square = new Square(loadedAction,progressAction);
 	this.shapes.hexagon = new Hexagon(loadedAction,progressAction);
@@ -124,11 +124,11 @@ Reflection.prototype.home = function () {
 	var width = this.screen.width;
 	var height = this.screen.height;
 
-	// full-screen bindings, f11, escape....
+	// full-screen bindings, f11, escape~~~
 
 	var centre = width/2;
 
-	// display stats...
+	// display stats~~~
 
 	this.screen.text("REFLECTION",0.5,100,"center",50);
 

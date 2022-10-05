@@ -51,7 +51,7 @@ function Screen (canvasId,colour) {
 Screen.prototype.keyPress = function (keyboardEvent) {
 	// console.log("keypress",keyboardEvent);
 
-	// intercept certain events....?
+	// intercept certain events~~~?
 
 	if (this.keyboardHandler != null) {
 		this.keyboardHandler.keyPress(keyboardEvent.key);
@@ -123,7 +123,7 @@ Screen.prototype.click = function (mouseEvent,buttonDown) {
 	switch (mouseEvent.button) {
 		case -1:
 			// no button pressed
-			// ignore mouse event entirely....
+			// ignore mouse event entirely~~~
 			return;
 		case 0:
 			button = "left"; break;
@@ -132,11 +132,11 @@ Screen.prototype.click = function (mouseEvent,buttonDown) {
 		case 2:
 			button = "right"; break;
 		case 3:
-			// browser back button...???
+			// browser back button~~~???
 			game_log("screen",0,"mouse event for button 3");
 			return;
 		case 4:
-			// browser forward button...???
+			// browser forward button~~~???
 			game_log("screen",0,"mouse event for button 4");
 			return;
 	}
@@ -149,7 +149,7 @@ Screen.prototype.click = function (mouseEvent,buttonDown) {
 			if (listener.widget.click != undefined) {
 				listener.widget.click(x,y,button,buttonDown);
 			}
-			// probably should break....
+			// probably should break~~~
 		}
 	}
 }
@@ -189,7 +189,7 @@ Screen.prototype.mouseCoordinate = function (mouseEvent) {
     var x;
     var y;
 
-	// ....
+	// ~~~
     if (mouseEvent.pageX != undefined && mouseEvent.pageY != undefined) {
 		x = mouseEvent.pageX;
 		y = mouseEvent.pageY;
@@ -273,7 +273,7 @@ Screen.prototype.drawRectangleOutline = function (x,y,width,height,colour,thickn
 }
 
 // draw the text on the canvas
-// return the metrics object for the associated text...
+// return the metrics object for the associated text~~~
 Screen.prototype.drawText = function (text,x,y,alignment,size,font,colour) {
 	this.context.save();
 	this.context.textAlign = alignment;

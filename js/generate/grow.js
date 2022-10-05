@@ -141,7 +141,7 @@ Game.prototype.add_arm_from = function (x,y,direction,tilesAdded,linkId) {
 	// if the tile we're going to was a new tile then we are done
 	if (newTile != null) {
 		// remove the directionTo from candidate faces
-		// not needed - candidateFaces not added until we attempt to add a path from the tile...
+		// not needed - candidateFaces not added until we attempt to add a path from the tile~~~
 		// var index = tileTo.candidateFaces.indexOf(directionTo);
 		// tileTo.candidateFaces.splice(index,1);
 		//console.log("removing",directionTo,"from candidateFaces for",xTo,yTo);
@@ -177,8 +177,8 @@ Game.prototype.add_arm_from = function (x,y,direction,tilesAdded,linkId) {
 		}
 
 		// could not add this link, remove any arms that were successful
-		// recursively remove the links from the tiles the arms connect to...
-		// the termnini tiles will no longer be null....reset them...
+		// recursively remove the links from the tiles the arms connect to~~~
+		// the termnini tiles will no longer be null~~~ reset them~~~
 		game_log("generate",2,"unable to add link");
 		for (var arm of armsAdded) this.remove_arm_from(xTo,yTo,arm,tilesAdded,linkIdTo);
 	}
@@ -198,7 +198,7 @@ Game.prototype.add_arm_from = function (x,y,direction,tilesAdded,linkId) {
 }
 
 Game.prototype.check_add_link_to = function(tile,direction,possibleLinks) {
-	// why is this checking isNode ??? ...
+	// why is this checking isNode ??? ~~~
 	if (tile.isSource || tile.isNode) {
 		// cannot add links through sources
 		game_log("generate",2,tile.description()+" is a source");
@@ -210,7 +210,7 @@ Game.prototype.check_add_link_to = function(tile,direction,possibleLinks) {
 		game_log("generate",2,tile.description()+" is not a valid connector");
 		return null;
 	} else if (tile.faces[direction].length > 0 && false) {
-		// pretty sure this check is unnecessary ...
+		// pretty sure this check is unnecessary ~~~
 		game_log("generate",1,tile.description()+" already has a path to the "+direction);
 		return false;
 	}

@@ -13,6 +13,7 @@
 function BoundedTriangular (shapes) {
 	this.name = "(Bounded) Triangular Tiling";
 	this.id = "bounded-triangular";
+	this.no = 0;
 	this.xContinuous = false;
 	this.yContinuous = false;
 	this.filters = false;
@@ -24,7 +25,7 @@ function BoundedTriangular (shapes) {
 
 BoundedTriangular.prototype = new Tiling();
 
-//...what is this for...
+//~~~what is this for~~~
 Tiling.prototype.level_button = function () {
 	throw "level_button function not defined for "+this.name;
 }
@@ -207,7 +208,7 @@ BoundedTriangularGrid.prototype.tileLocation = function (x,y,rotation) {
 		var row = (2*y - x);
 	}
 
-	// get pixels based on row and column...
+	// get pixels based on row and column~~~
 	var xPixel = this.columnLocations[column];
 	var yPixel = this.rowLocations[row];
 

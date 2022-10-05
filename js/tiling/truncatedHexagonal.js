@@ -2,6 +2,7 @@
 function TruncatedHexagonal (shapes) {
 	this.name = "Truncated THexagonal Tiling";
 	this.id = "truncated-hexagonal";
+	this.no = 10;
 	this.xContinuous = true;
 	this.yContinuous = true;
 	this.filters = null;

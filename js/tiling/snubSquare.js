@@ -16,6 +16,7 @@
 function SnubSquare (shapes) {
 	this.name = "Snub Square Tiling";
 	this.id = "snub-square";
+	this.no = 4;
 	this.xContinuous = true;
 	this.yContinuous = true;
 	this.filters = null;

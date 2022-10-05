@@ -263,34 +263,7 @@ ConRegon.prototype.partitionCombinations = function (length,maxSize,linkIdOffset
 
 	return combinations;
 }
-/* 
-ConRegon.prototype.definePossibleForms = function () {
-	this.possibleForms = {};
 
-	// each possible link count, bar the maximum
-	for (var linkCount = 1; linkCount < this.sides/2; linkCount++) {
-		// ignore 1 link with > 3 arms...
-
-		// each form
-		for (var form in this.form[linkCount]) {
-			this.possibleForms[form] = [];
-			var pattern = new RegExp(form.replace(/0/g,"."));
-			for (var possibleForm in this.form[linkCount + 1]) {
-				// each shift of the form
-				for (var rotation = 0; rotation < this.sides; rotation++) {
-					var shift = possibleForm.substr(possibleForm.length - rotation , rotation) + possibleForm.substr(0 , this.sides - rotation);
-					// regexp looking for a match
-					if (!shift.match(pattern)) continue;
-
-					// console.log(form,"->",shift);
-					this.possibleForms[form].push(shift);
-					break;
-				}
-			}
-		}
-	}
-}
- */
 ConRegon.prototype.loadImages = function () {
 	// calculate and record the base image sizes
 	this.imageSizes = [];
@@ -590,7 +563,7 @@ ConRegonTile.prototype.newTile = function (tile) {
 		tile.faceColours[direction] = {red: 0, green: 0, blue: 0};
 	}
 
-	// no longer added here - added when generate.js attempts to add a path...
+	// no longer added here - added when generate.js attempts to add a path~~~
 	// tile.candidateFaces = this.randomDirections(tile.orientation);
 	tile.shape = this;
 	tile.form = this.ideal.initialForm;
@@ -657,6 +630,7 @@ ConRegonTile.prototype.newTileShift = function (tile,shift) {
 	//console.log("new shift",shift,"for tile",tile);
 	var rotation = 0;
 	var validForm = true;
+	var description = tile.description();
 
 	if (this.ideal.form[tile.linkCount] == undefined) {
 		console.log(this.name,"form undefined for",tile.linkCount,"links");
@@ -687,7 +661,7 @@ ConRegonTile.prototype.newTileShift = function (tile,shift) {
 		tile.form = this.shift(shift,modulo(this.sides - tile.rotation,this.sides));
 		//console.log("invalid connector",tile.x,tile.y,tile.linkCount,tile.form,tile.image);
 	}
-	console.log("updated "+tile.description()+" form to "+tile.form);
+	console.log("updated "+description+" form to "+tile.form);
 }
 
 // return the element of the form at the given direction for the tile
@@ -1020,7 +994,7 @@ ConRegonTile.prototype.canFilter = function (connector) {
 	if (this.ideal.straightForms[connector.form] == undefined) return false;
 	console.log("straight");
 
-	// must be at least one spare path...
+	// must be at least one spare path~~~
 	if (connector.PathCount >= this.sides/2) return false;
 	console.log("spare path");
 
@@ -1093,7 +1067,7 @@ ConRegonTile.prototype.createTileImage = function (tile) {
 	} else {
 		var breakdown = this.ideal.form[tile.linkCount][tile.form];
 
-		//...
+		//~~~
 		if (breakdown == undefined) {
 			console.log(tile);
 			throw "Invalid breakdown for tile";

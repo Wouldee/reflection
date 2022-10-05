@@ -8,6 +8,7 @@
 function Squares (shapes) {
 	this.name = "Square Tiling";
 	this.id = "squares";
+	this.no = 2;
 	this.xContinuous = null;
 	this.yContinuous = null;
 	this.filters = null;

@@ -1,3 +1,9 @@
+// Equalateral triangle
+// Side length = S
+// Height = Q3*S/2
+// Area = (Q3*S**2)/4
+// Centre is Q3*S/6 from each edge
+// Centre is Q3*S/3 from each point
 
 function Triangle (loadedAction,progressAction) {
 	this.loadedAction = loadedAction;

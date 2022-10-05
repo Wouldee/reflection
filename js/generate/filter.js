@@ -1,7 +1,7 @@
 
 // create a prism of the specified shape & type
 // create three sources to feed light into the prism
-// return...
+// return~~~
 Game.prototype.create_prism = function (prismType) {
 	game_log("generate",1,"Create prism")
 	var createdTiles;
@@ -36,7 +36,7 @@ Game.prototype.create_prism = function (prismType) {
 	}
 
 	// create the prism
-	// rotation...
+	// rotation~~~
 	var tile = this.grid.createTile(x,y);
 	var form = prismForms[0];
 	tile.prism(form);
@@ -308,7 +308,7 @@ Game.prototype.add_prism = function (x, y, filteredPaths) {
 	// now add back the cut paths
 	for (var direction in cutPaths) {
 		var neighbour = this.grid.tiling.neighbour(tile.x, tile.y, direction);
-		if (neighbour == null) continue; // shouldn't happen? I think? ...
+		if (neighbour == null) continue; // shouldn't happen? I think? ~~~
 		var neighbourTile = this.grid.tile(neighbour.x,neighbour.y);
 
 		// Each path out of the neighbour in the direction of this tile
@@ -411,7 +411,7 @@ Game.prototype.addFilter = function (x, y, filteredPaths) {
 					filteredLink = filtered[1]
 
 					if (path.connects_from(tile,link,filteredTile,filteredLink)) {
-						// could choose another filter colour? ...
+						// could choose another filter colour? ~~~
 						game_log ("filter",1,"cannot add filter to tile @"+tile.x+","+tile.y+": path "+path.id+" is already filtered on tile @"+filteredTile.x+","+filteredTile.y);
 						return false;
 					}
@@ -477,7 +477,7 @@ Game.prototype.addFilter = function (x, y, filteredPaths) {
 			// Add back any paths from the neighbour
 			// Each path will use one of the new links, depending on colour
 			var neighbour = this.grid.tiling.neighbour(tile.x, tile.y, direction);
-			if (neighbour == null) continue; // shouldn't happen? I think? ...
+			if (neighbour == null) continue; // shouldn't happen? I think? ~~~
 			var neighbourTile = this.grid.tile(neighbour.x,neighbour.y);
 
 			// Each path out of the neighbour in the direction of this tile

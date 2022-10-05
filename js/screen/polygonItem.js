@@ -84,12 +84,12 @@ PolygonItem.prototype.remove = function () {
 
 PolygonItem.prototype.resize = function () {
 	this.calculateDimensions();
-	//underneath image needs to be resized also...
+	//underneath image needs to be resized also~~~
 }
 
 // public function
 // redisplay the button
-// should only be called if the button is currently not displayed...
+// should only be called if the button is currently not displayed~~~
 PolygonItem.prototype.redraw = function () {
 	// grab an image of the canvas area currently occupying the button's area
 	// will be used if the transparency of the rectangle changes
@@ -132,7 +132,7 @@ PolygonItem.prototype.draw = function () {
 	}
 
 	if (this.border != null) {
-		// unsupported...
+		// unsupported~~~
 	}
 
 	this.screen.context.restore();

@@ -74,7 +74,7 @@ function init () {
 	// parsed in tiling.js
 
 	// sources:
-	// an exact number (integer)
+	// an exact number (integer, max is 128)
 	// or a proportion of the total tiles (between 1 and 0)
 	// "Q", square root of the total number of tiles (this is the default)
 	// Should specify an exact number for tiny tilings, because e.g 3 is probably too many sources for 9 tiles total
@@ -99,14 +99,16 @@ function init () {
 	// straight - attempt to grow each path in a straight line
 	// acute - always attempt to always turn an acute corner
 	// parsed in tile.js
+	// as a global here for game.id() - max of 8 options supported
+	GROWTHS = ["random","straight","acute"];
 
 	// mix:
 	// either "none", "path", "node", or "both" (default)
-	// a boolean, should the paths be mixed into hybrid colours (yellow, teal, magenta, white)
 	// path means mix entire paths only, i.e between connecters and sources or other connectors
 	// node means mix to nodes only, i.e between connectors and nodes
 	// has no effect if there is only one colour
 	// parsed in generate.js
+	MIXES = ["none","path","node","default"];
 
 	// filter:
 	// a boolean, should the mixed paths be filtered. Has no effect if mix is false
@@ -155,6 +157,8 @@ function init () {
 	LEVELS[18] = {tiling : "truncated-square", size : "large", growth : "straight"};
 	LEVELS[19] = {tiling : "truncated-hexagonal", size : "medium", growth : "straight"};
 	LEVELS[20] = {tiling : "truncated-trihexagonal", size : "huge", growth : "prism"};
+
+	run_test();
 
 	var instance = new Reflection();
 	//game_log("game",0,"initialised",instance);
@@ -382,3 +386,23 @@ function pad_number(number, length) {
     return padded;
 }
 
+//~~~
+// testing area
+function Person () {
+}
+
+Person.prototype.initialise = function (age) {
+	console.log("person age = "+age);
+}
+
+function Bobby () {
+	this.name = "Bobby";
+	// console.log("Bobby's age = "+age);
+	this.initialise(...arguments);
+}
+
+Bobby.prototype = new Person();
+
+function run_test() {
+	var bob = new Bobby(85);
+}

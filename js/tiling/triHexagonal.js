@@ -11,6 +11,7 @@
 function TriHexagonal (shapes) {
 	this.name = "Tri-hexagonal Tiling";
 	this.id = "trihexagonal";
+	this.no = 7;
 	this.xContinuous = true;
 	this.yContinuous = null;
 	this.filters = null;

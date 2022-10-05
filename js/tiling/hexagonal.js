@@ -7,6 +7,7 @@
 function Hexagonal (shapes) {
 	this.name = "Hexagonal Tiling";
 	this.id = "hexagonal";
+	this.no = 5;
 	this.xContinuous = true;
 	this.yContinuous = true;
 	this.filters = null;

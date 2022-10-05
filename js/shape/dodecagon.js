@@ -127,7 +127,7 @@ Dodecagon.prototype.defineStraightForms = function () {
 	dodecagon.straightForms["020301020301"] = 3;
 	dodecagon.straightForms["030102030102"] = 3;
 	dodecagon.straightForms["030201030201"] = 3;
-	//this is getting wordy...
+	//this is getting wordy~~~
 
 	permutations([1,2,3,4]).forEach(function (permutation) {
 		var form = "00" + permutation.join("");

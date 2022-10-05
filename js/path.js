@@ -72,7 +72,7 @@ Path.prototype.from = function (tile,link,direction) {
 	return (segment.from[direction] != undefined);
 }
 
-// not used....
+// not used~~~
 Path.prototype.next_link = function (tile,link,direction) {
 	var segmentId = this.segment_id(tile,link);
 	var segment = this.segments[segmentId];
@@ -83,7 +83,7 @@ Path.prototype.next_link = function (tile,link,direction) {
 	return nextSegment.link;
 }
 
-// not used...
+// not used~~~
 Path.prototype.previous_link = function (tile,link,direction) {
 	var segmentId = this.segment_id(tile,link);
 	var segment = this.segments[segmentId];
@@ -134,7 +134,7 @@ Path.prototype.connects_from = function (fromTile,fromLink,toTile,toLink,visited
 // not used
 // change the path so that it passes through the new link instead of the old link
 // there is something wrong with this
-// but I have no idea what....
+// but I have no idea what~~~
 Path.prototype.switch_links = function (tile,oldLink,newLink) {
 	var segmentId = this.segment_id(tile,oldLink);
 
