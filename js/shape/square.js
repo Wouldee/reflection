@@ -1,3 +1,7 @@
+// empty squares aren't handled properly~~~
+// spotted on level 13, truncated square
+// no links - should either be painted grey, or have links all through
+
 
 function Square (loadedAction,progressAction) {
 	this.loadedAction = loadedAction;

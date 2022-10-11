@@ -3,7 +3,7 @@
 function init () {
 	HOST = "localhost"
 	SHUFFLE = true;
-	ROTATE = false;
+	ROTATE = true;
 	Q2 = Math.sqrt(2);
 	Q3 = Math.sqrt(3);
 	RAD = Math.PI/180;

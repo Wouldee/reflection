@@ -1,12 +1,5 @@
 
 // Create a new grid
-function Grid () {
-	this.columnLocations = [];
-	this.rowLocations = [];
-	this.shapes = [];
-}
-
-// Initialise grid
 // game = the game object (game.js)
 // screen = screen object (screen.js)
 // tiling = abstract tiling object (tiling.js)
@@ -14,7 +7,7 @@ function Grid () {
 // innerDimensions = x1,y1,x2,y2 of the inner clickable area of the grid
 // outerDimensions = x1,y1,x2,y2 of the outer viewable area of the grid
 // xContinuous & yContinuous = booleans, used by the tiling
-Grid.prototype.initialise = function (game,screen,tiling,size,innerDimensions,outerDimensions,xContinuous,yContinuous) {
+function Grid (game,screen,tiling,size,innerDimensions,outerDimensions,xContinuous,yContinuous) {
 	this.game = game;
 	this.screen = screen;
 	this.tiling = tiling;
@@ -27,6 +20,10 @@ Grid.prototype.initialise = function (game,screen,tiling,size,innerDimensions,ou
 	this.xContinuous = xContinuous;
 	this.yContinuous = yContinuous;
 
+	// tiling-specific variables
+	this.columnLocations = [];
+	this.rowLocations = [];
+
 	// offsets for drawing on the gridCanvas
 	this.xOffset = this.x - outerDimensions.x1;
 	this.yOffset = this.y - outerDimensions.y1;
@@ -35,6 +32,18 @@ Grid.prototype.initialise = function (game,screen,tiling,size,innerDimensions,ou
 	this.yScrollPeriod = 1;
 	this.xScrollOffset = 0;
 
+	this.reset_properties();
+	tiling.calculate_dimensions(this);
+	this.shapes = tiling.shapes();
+	this.reset_tiles();
+
+	// clear the outer area
+	this.clear_screen();
+}
+
+// called when game is restarted or new game started while previous game still exists
+Grid.prototype.clear = function () {
+	delete this.canvas;
 	this.reset_properties();
 	this.reset_tiles();
 
@@ -106,8 +115,10 @@ Grid.prototype.resize = function (innerDimensions,outerDimensions) {
 	this.tileImageLoadProgress = 0;
 
 	// update/reset tiling
-	this.calculate_dimensions();
-	this.resize_shapes();
+	this.tiling.calculate_dimensions();
+	for (name in this.shapes) {
+		shapes[name].resize();
+	}
 
 	// update scroll
 	this.update_scroll();
@@ -128,8 +139,6 @@ Grid.prototype.resize = function (innerDimensions,outerDimensions) {
 
 // update the screen with the current image of the grid
 Grid.prototype.update_screen = function () {
-	var grid = this;
-
 	// console.log("update grid screen");
 
 	// convert the grid canvas to an image and draw it
@@ -139,6 +148,7 @@ Grid.prototype.update_screen = function () {
 
 	var loadCounter = this.loadCounter;
 	// the image has no content yet, we have to arrange for it to be drawn when it is loaded
+	var grid = this;
 	var onLoad = function () {
 		grid.imageLoaded = true;
 		grid.drawScreen(loadCounter);
@@ -146,12 +156,75 @@ Grid.prototype.update_screen = function () {
 	this.image.addEventListener("load",onLoad);
 }
 
+Grid.prototype.draw_screen = function (loadCounter) {
+	//console.log("drawing grid image; scroll:",this.xScroll,this.yScroll,"scroll pixel:",this.xScrollPixel,this.yScrollPixel);
+
+	if (!this.imageLoaded) return;
+	if (loadCounter != undefined && loadCounter != this.loadCounter) return;
+
+	// console.log("draw grid screen");
+
+	// clear the outer area
+	this.tiling.clipScreen();
+
+	// the grid image will often not occupy the entire area
+	// this happens when the grid is continuous
+	// the grid image is drawn multiple times, i.e a 'tiling' of grid images
+
+	// draw the grid images row by row, starting at the bottom
+	// find the y of the images at the bottom of the screen
+	var row = 0;
+	y = this.y + this.yScrollPixel;
+	while (y < this.outerDimensions.y2) {
+		y += this.scrollHeight;
+
+		// if the scroll has a vertical period, we need to keep track of how many rows
+		row++;
+	}
+
+	// keep drawing rows until we hit the top
+	while (y > this.outerDimensions.y1) {
+		y -= this.scrollHeight;
+		row--;
+
+		var height = this.yPixels;
+		//console.log("draw grid image row at",y,"with height",height);
+
+		var xOffset = this.xScrollOffset*modulo(row,this.yScrollPeriod);
+
+		// draw each row image from right to left
+		// find the x of the rightmost image
+		x = this.x + this.xScrollPixel + xOffset;
+		while (x < this.outerDimensions.x2) x += this.scrollWidth;
+
+		// draw images until we hit the left edge
+		while (x > this.outerDimensions.x1) {
+			x -= this.scrollWidth;
+			var width = this.xPixels;
+
+			//console.log("drawing grid image at",x,y,"with",width,height);
+
+			// draw the grid image
+			//if (x == this.x + this.xScrollPixel && y == this.y + this.yScrollPixel) {
+				this.screen.context.drawImage(this.image,x,y,width,height);
+			//}
+		}
+	}
+
+	// reverse the clip
+	this.tiling.unclipScreen();
+
+	// inform the game that the grid has been drawn
+	this.game.gridDrawn();
+}
+
+/* 
 // calculate the xPixels, yPixels, tilePixels column and row locations
-Grid.prototype.calculateDimensions = function () {
+Grid.prototype.calculate_dimensions = function () {
 	throw "calculateDimensions function not defined for "+this.tiling.name+" grid";
 }
 
-Grid.prototype.resizeShapes = function () {
+Grid.prototype.resize_shapes = function () {
 	throw "resizeShapes function not defined for "+this.tiling.name+" grid";
 }
 
@@ -159,13 +232,14 @@ Grid.prototype.resizeShapes = function () {
 Grid.prototype.shape = function (x,y) {
 	throw "shape function not defined for "+this.tiling.name+" grid";
 }
+ */
 
 // return the orientation of the tile at the given location
 Grid.prototype.orientation = function (x,y) {
 	throw "orientation function not defined for "+this.tiling.name+" grid";
 }
 
-Grid.prototype.newTile = function (tile) {
+Grid.prototype.new_tile = function (tile) {
 	tile.orientation = this.orientation(tile.x,tile.y);
 	var shape = this.shape(tile.x,tile.y);
 	shape.newTile(tile);
