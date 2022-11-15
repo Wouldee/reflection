@@ -572,7 +572,7 @@ ConRegonTile.prototype.newTile = function (tile) {
 
 // create a blank tile
 // default function creates a straight
-ConRegonTile.prototype.blankTile = function (tile) {
+ConRegonTile.prototype.blank_tile = function (tile) {
 	console.log("blank tile @",tile.x,tile.y);
 }
 
@@ -661,7 +661,7 @@ ConRegonTile.prototype.newTileShift = function (tile,shift) {
 		tile.form = this.shift(shift,modulo(this.sides - tile.rotation,this.sides));
 		//console.log("invalid connector",tile.x,tile.y,tile.linkCount,tile.form,tile.image);
 	}
-	console.log("updated "+description+" form to "+tile.form);
+	// console.log("updated "+description+" form to "+tile.form);
 }
 
 // return the element of the form at the given direction for the tile
@@ -829,7 +829,7 @@ ConRegonTile.prototype.finishConnector = function (tile) {
 	}
 
 	this.addAdditionalLinks(tile);
-	this.grid.connectorFinished();
+	this.grid.connector_finished();
 }
 
 // tile is a filter
@@ -888,7 +888,7 @@ ConRegonTile.prototype.finishFilter = function (tile) {
 
 	// even though not technically a connector, filters begin life as connectors
 	// the grid will not draw if it thinks there is a connector outstanding
-	this.grid.connectorFinished();
+	this.grid.connector_finished();
 }
 
 // tile is a prism
@@ -946,7 +946,7 @@ ConRegonTile.prototype.finishPrism = function (tile) {
 
 	// even though not technically a connector, prisms begin life as connectors
 	// the grid will not draw if it thinks there is a connector outstanding
-	this.grid.connectorFinished();
+	this.grid.connector_finished();
 }
 
 ConRegonTile.prototype.queueUndrawnTile = function (tile) {
@@ -989,21 +989,21 @@ ConRegonTile.prototype.addFormLink = function (tile,rotation) {
 }
 
 ConRegonTile.prototype.canFilter = function (connector) {
-	console.log("can add filter to connector?",connector);
+	// console.log("can add filter to connector?",connector);
 	// tile must be a straight
 	if (this.ideal.straightForms[connector.form] == undefined) return false;
-	console.log("straight");
+	// console.log("straight");
 
 	// must be at least one spare path~~~
 	if (connector.PathCount >= this.sides/2) return false;
-	console.log("spare path");
+	// console.log("spare path");
 
 	return true;
 }
 
 // called by the tiling when the first load of images has finished
 // check if there are any undrawn images
-ConRegonTile.prototype.imagesLoaded = function () {
+ConRegonTile.prototype.images_loaded = function () {
 	game_log(this.ideal.name,"1",this.ideal.name,"images loaded - undrawn:",this.undrawnImages);
 	this.primaryImagesLoaded = true;
 	var tiles = [];
@@ -1051,9 +1051,9 @@ ConRegonTile.prototype.imagesLoaded = function () {
 
 ConRegonTile.prototype.loadImage = function (image,scaleRatio) {
 	var grid = this.grid;
-	var loadAction = function () { grid.tileImageCreated(); }
+	var loadAction = function () { grid.tile_image_created(); }
 	var loadingAction = undefined;
-	var loadedAction = function  () { grid.tileImageLoaded(); }
+	var loadedAction = function  () { grid.tile_image_loaded(); }
 	return new ScaledImage(grid,image,scaleRatio,loadAction,loadingAction,loadedAction);
 }
 
@@ -1136,11 +1136,11 @@ ConRegonTile.prototype.reflectorBlockImage = function (form) {
 }
 
 // tell the grid where to draw and at what rotation
-ConRegonTile.prototype.drawTileAt = function (xPixel,yPixel,orientation) {
+ConRegonTile.prototype.draw_tile_at = function (xPixel,yPixel,orientation) {
 	var xOrigin = xPixel + this.origin[orientation].x;
 	var yOrigin = yPixel + this.origin[orientation].y;
-	this.grid.drawAt(xOrigin,yOrigin);
-	this.grid.rotateBy(this.degrees(orientation));
+	this.grid.draw_at(xOrigin,yOrigin);
+	this.grid.rotate_by(this.degrees(orientation));
 }
 
 // clear the tile at the current position
@@ -1153,10 +1153,10 @@ ConRegonTile.prototype.clearTile = function () {
 		i++;
 	}
 
-	this.grid.clearPolygon.apply(this.grid,coords);
+	this.grid.clear_polygon.apply(this.grid,coords);
 	var outlineArgs = coords;
 	outlineArgs.push("black");
-	this.grid.outlinePolygon.apply(this.grid,outlineArgs);
+	this.grid.outline_polygon.apply(this.grid,outlineArgs);
 }
 
 // draw node at the curent location
@@ -1202,13 +1202,13 @@ ConRegonTile.prototype.drawConnector = function (tile) {
 
 	var image = tile.image;
 	if (image != null) {
-		this.grid.startDrawing();
+		this.grid.start_drawing();
 		var location = this.drawPoint[tile.rotation];
-		this.grid.drawAt(location.x,location.y);
-		this.grid.rotateBy(this.ideal.angle*tile.rotation);
+		this.grid.draw_at(location.x,location.y);
+		this.grid.rotate_by(this.ideal.angle*tile.rotation);
 
 		image.draw();
-		this.grid.finishDrawing();
+		this.grid.finish_drawing();
 	}
 }
 
@@ -1220,13 +1220,13 @@ ConRegonTile.prototype.drawFilter = function (tile) {
 	this.drawBeams(tile);
 
 	var image = tile.image;
-	this.grid.startDrawing();
+	this.grid.start_drawing();
 	var location = this.drawPoint[tile.rotation];
-	this.grid.drawAt(location.x,location.y);
-	this.grid.rotateBy(this.ideal.angle*tile.rotation);
+	this.grid.draw_at(location.x,location.y);
+	this.grid.rotate_by(this.ideal.angle*tile.rotation);
 
 	image.draw();
-	this.grid.finishDrawing();
+	this.grid.finish_drawing();
 }
 
 ConRegonTile.prototype.drawPrism = function (tile) {
@@ -1237,19 +1237,19 @@ ConRegonTile.prototype.drawPrism = function (tile) {
 	this.drawBeams(tile);
 
 	var image = tile.image;
-	this.grid.startDrawing();
+	this.grid.start_drawing();
 	var location = this.drawPoint[tile.rotation];
-	this.grid.drawAt(location.x,location.y);
-	this.grid.rotateBy(this.ideal.angle*tile.rotation);
+	this.grid.draw_at(location.x,location.y);
+	this.grid.rotate_by(this.ideal.angle*tile.rotation);
 
 	image.draw();
-	this.grid.finishDrawing();
+	this.grid.finish_drawing();
 }
 
 // draw the arms of the tile
 // canvas context must be translated and rotated to the origin first
 ConRegonTile.prototype.drawBeams = function (tile) {
-	this.grid.startDrawing();
+	this.grid.start_drawing();
 
 	// each arm
 	var rotation = 0;
@@ -1258,8 +1258,8 @@ ConRegonTile.prototype.drawBeams = function (tile) {
 	while (true) {
 		if (tile.faces[direction].length > 0) {
 			var location = this.drawPoint[rotation];
-			this.grid.drawAt(location.x,location.y);
-			this.grid.rotateBy(this.ideal.angle*rotation);
+			this.grid.draw_at(location.x,location.y);
+			this.grid.rotate_by(this.ideal.angle*rotation);
 			// rotation stacks on the canvas, so reset our local rotation after rotating
 			rotation = 0;
 
@@ -1280,7 +1280,7 @@ ConRegonTile.prototype.drawBeams = function (tile) {
 		if (direction == initialDirection) break;
 	}
 
-	this.grid.finishDrawing();
+	this.grid.finish_drawing();
 }
 
 

@@ -60,11 +60,18 @@ Tile.prototype.remove_link = function (linkId) {
 
 // add a new arm to the link in the given direction
 Tile.prototype.add_to_link = function (linkId,direction) {
-	//console.log("add",direction,"to link",linkId,"on tile",this.x,this.y);
+	// console.log("add",direction,"to link",linkId,"on tile",this.x,this.y);
+	// console.log("tile = ",this);
 	linkId = parseInt(linkId);                   // ensure the linkId is an int
 	var link = this.links[linkId];               // load the link
 	link.addArm(direction);                      // add the arm to the link
 	var faceLinks = this.faces[direction];       // array of link ids for the face
+
+	// ~~~
+	if (faceLinks == undefined) {
+		console.log("faceLinks undefined while adding "+direction+" to tile",this);
+	}
+
 	faceLinks.push(linkId);            // add the linkId
 
 	if (this.isConnector) {
@@ -392,10 +399,10 @@ Tile.prototype.finish = function () {
 Tile.prototype.update_lit = function () {
 	var litColour = composite_colour(this.colours);
 	if (litColour == this.colour) {
-		if (!this.lit) this.grid.lightNode();
+		if (!this.lit) this.grid.light_node();
 		this.lit = true;
 	} else {
-		if (this.lit) this.grid.unlightNode();
+		if (this.lit) this.grid.unlight_node();
 		this.lit = false;
 	}
 }
@@ -575,7 +582,7 @@ Tile.prototype.draw = function (xPixel,yPixel,clear) {
 
 	// move the canvas origin and apply rotation
 	// both depend on the orientation
-	this.shape.drawTileAt(xPixel,yPixel,this.orientation);
+	this.shape.draw_tile_at(xPixel,yPixel,this.orientation);
 
 	// clear the tile
 	if (clear) this.shape.clearTile();

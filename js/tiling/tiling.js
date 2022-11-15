@@ -33,6 +33,8 @@ Tiling.prototype.level_button = function () {
 	throw "level_button function not defined for "+this.name;
 }
 
+// return the size for this tiling that matches the description
+// see globals.js, level size property
 Tiling.prototype.size_number = function (sizeDescription) {
 	// determine offset by how many + or - are suffixed:
 	var offset = 0;
@@ -125,138 +127,104 @@ Tiling.prototype.closest_size = function (tiles) {
 	throw "closest_size function not defined for "+this.name;
 }
 
-Tiling.prototype.newGrid = function (grid) {
-	throw "newGrid function not defined for "+this.name;
-}
-
-
-function TilingGrid () {
-	this.columnLocations = [];
-	this.rowLocations = [];
-	this.shapes = [];
-}
-
-TilingGrid.prototype.resize = function () {
-	this.calculateDimensions();
-	this.resizeShapes();
-}
-
 // calculate the xPixels, yPixels, tilePixels column and row locations
-TilingGrid.prototype.calculateDimensions = function () {
-	throw "calculateDimensions function not defined for "+this.tiling.name+" grid";
-}
-
-TilingGrid.prototype.resizeShapes = function () {
-	throw "resizeShapes function not defined for "+this.tiling.name+" grid";
+Tiling.prototype.calculate_dimensions = function (grid) {
+	throw "calculateDimensions function not defined for "+this.name+" grid";
 }
 
 // return the shape of the tile at the given location
-TilingGrid.prototype.shape = function (x,y) {
-	throw "shape function not defined for "+this.tiling.name+" grid";
+Tiling.prototype.shape = function (shapes, x, y) {
+	throw "shape function not defined for "+this.name+" grid";
 }
 
 // return the orientation of the tile at the given location
-TilingGrid.prototype.orientation = function (x,y) {
-	throw "orientation function not defined for "+this.tiling.name+" grid";
-}
-
-TilingGrid.prototype.newTile = function (tile) {
-	tile.orientation = this.orientation(tile.x,tile.y);
-	var shape = this.shape(tile.x,tile.y);
-	shape.newTile(tile);
+Tiling.prototype.orientation = function (x, y) {
+	throw "orientation function not defined for "+this.name+" grid";
 }
 
 // generic random tile function for most tilings
-// tiling needs a specific function where it does not use all values
+// tiling needs a specific function if it does not use all values
 // of x,y
-TilingGrid.prototype.randomTile = function () {
-	var x = Math.floor(Math.random()*(this.grid.xMax + 1));
-	var y = Math.floor(Math.random()*(this.grid.yMax + 1));
+Tiling.prototype.random_tile = function (maxX, maxY) {
+	var x = Math.floor(Math.random()*(maxX + 1));
+	var y = Math.floor(Math.random()*(maxY + 1));
 	return [x,y];
 }
 
 // return x,y of the tile of the specified shape that is closest to the centre
-TilingGrid.prototype.centre_tile = function () {
-	return this.tileAt(this.grid.xPixels/2,this.grid.yPixels/2);
+Tiling.prototype.centre_tile = function (grid) {
+	return this.tile_at(grid, grid.xPixels/2, grid.yPixels/2);
 }
 
-// tiling~~~
-TilingGrid.prototype.randomRotation = function (x,y) {
-	return Math.floor(Math.random()*this.shape(x,y).sides);
+// return a random rotation, between 0 and sides - 1
+// depending on the shape @ x, y
+Tiling.prototype.random_rotation = function (shapes, x, y) {
+	return Math.floor(Math.random()*this.shape(shapes,x,y).sides);
 }
 
 // return a neighbour object containing x,y,direction of the face of the
 // tile touching the given tile face
-TilingGrid.prototype.neighbour = function (x,y,direction) {
-	throw "neighbour function not defined for "+this.tiling.name+" grid";
+Tiling.prototype.neighbour = function (x, y, direction, gridSize) {
+	throw "neighbour function not defined for "+this.name+" grid";
 }
 
 // similar to randomTile, tiling needs a 
 // specific function where it does not use all values of x,y
-TilingGrid.prototype.eachTile = function (tileFunction) {
-	for (var x = 0; x <= this.grid.xMax; x++) {
-		for (var y = 0; y <= this.grid.yMax; y ++) {
+Tiling.prototype.each_tile = function (maxX, maxY, tileFunction) {
+	for (var x = 0; x <= maxX; x++) {
+		for (var y = 0; y <= maxY; y ++) {
 			tileFunction(x,y);
 		}
 	}
 }
 
 // return the x y pixel at the centre of the tile
-TilingGrid.prototype.tileLocation = function (x,y,rotation) {
-	var xPixel = this.columnLocations[x];
-	var yPixel = this.rowLocations[y];
+Tiling.prototype.tile_location = function (grid, x, y) {
+	var xPixel = grid.columnLocations[x];
+	var yPixel = grid.rowLocations[y];
 	return [xPixel,yPixel];
 }
 
 // return the x,y of the tile that the pixel position is inside of
-TilingGrid.prototype.tileAt = function (xPixel,yPixel) {
-	throw "tileAt function not defined for "+this.tiling.name+" grid";
+Tiling.prototype.tile_at = function (grid, xPixel, yPixel) {
+	throw "tileAt function not defined for "+this.name+" grid";
 }
 
-TilingGrid.prototype.updateScroll = function () {
-	throw "updateScroll function not defined for "+this.tiling.name+" grid";
+// how many tiles per scroll, default 1
+Tiling.prototype.x_scroll_increment = function () { return 1; }
+Tiling.prototype.y_scroll_increment = function () { return 1; }
+
+// return the horizontal offset in pixels
+// based on the current scroll position
+Tiling.prototype.x_scroll_pixel = function (xScroll, tilePixels) {
+	throw "x_scroll_pixel function not defined for "+this.name+" grid";
 }
 
-TilingGrid.prototype.clearScreen = function () {
-	this.clipScreen();
-	this.unclipScreen();
+// return the vertical offset in pixels
+// based on the current scroll position
+Tiling.prototype.y_scroll_pixel = function (yScroll, tilePixels) {
+	throw "x_scroll_pixel function not defined for "+this.name+" grid";
 }
 
-TilingGrid.prototype.clipScreen = function () {
-	var outer = this.grid.outerDimensions;
-	var screen = this.grid.screen;
-
+Tiling.prototype.clip_perimeter = function (grid) {
 	// clear the outer area
-	var x = outer.x1;
-	var y = outer.y1;
-	var width = outer.x2 - outer.x1;
-	var height = outer.y2 - outer.y1;
+	var x = grid.outerDimensions.x1;
+	var y = grid.outerDimensions.y1;
+	var width = grid.outerDimensions.x2 - grid.outerDimensions.x1;
+	var height = grid.outerDimensions.y2 - grid.outerDimensions.y1;
 
-	// clip the area
-	screen.context.save();
-	screen.context.beginPath();
-	screen.context.moveTo(x,y);
-	screen.context.lineTo(x + width,y);
-	screen.context.lineTo(x + width,y + height);
-	screen.context.lineTo(x,y + height);
-	screen.context.lineTo(x,y);
-	screen.context.clip();
+	grid.screen.context.save();
+	grid.screen.context.beginPath();
+	grid.screen.context.moveTo(x,y);
+	grid.screen.context.lineTo(x + width,y);
+	grid.screen.context.lineTo(x + width,y + height);
+	grid.screen.context.lineTo(x,y + height);
+	grid.screen.context.lineTo(x,y);
+	grid.screen.context.clip();
 
-	screen.context.clearRect(x, y, width, height);
+	grid.screen.context.clearRect(x, y, width, height);
 
 	// fill with the background colour
-	screen.context.fillStyle = screen.colour;
-	screen.context.fillRect(x,y,width,height);
-}
-
-TilingGrid.prototype.unclipScreen = function () {
-	this.grid.screen.context.restore();
-}
-
-TilingGrid.prototype.imagesLoaded = function () {
-	var imagesLoaded = true;
-	for (var shape of this.shapes) {
-		if (!shape.imagesLoaded()) imagesLoaded = false;
-	}
-	return imagesLoaded;
+	grid.screen.context.fillStyle = grid.screen.colour;
+	grid.screen.context.fillRect(x,y,width,height);
 }

@@ -634,7 +634,7 @@ TiledShape.prototype.imagesLoaded = function () {
 
 TiledShape.prototype.loadImage = function (image,scaleRatio) {
 	var grid = this.grid;
-	var loadAction = function () { grid.tileImageCreated(); }
+	var loadAction = function () { grid.tile_image_created(); }
 	var loadingAction = undefined;
 	var loadedAction = function () { grid.tileImageLoaded(); }
 	return new ScaledImage(grid,image,scaleRatio,loadAction,loadingAction,loadedAction);

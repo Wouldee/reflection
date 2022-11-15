@@ -138,5 +138,5 @@ SquareTile.prototype.finishConnector = function (tile) {
 			}
 			break;
 	}
-	this.grid.connectorFinished();
+	this.grid.connector_finished();
 }

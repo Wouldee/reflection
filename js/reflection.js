@@ -41,6 +41,8 @@ function Reflection () {
 	this.tilings.push(new TruncatedSquare(this.shapes));       //9  size 2-9
 	this.tilings.push(new TruncatedHexagonal(this.shapes));    //10 size 1-4
 	this.tilings.push(new TruncatedTriHexagonal(this.shapes)); //11 size 1-4
+	this.tilings.push(new ExtendedSquare(this.shapes));     //12 size ??
+	this.tilings.push(new ExtendedHexagonal(this.shapes));     //13 size ??
 
 	// this.levels = [];
 	// tiling,size,xContinuous,yContinuous,mix ratio, growth type
@@ -204,7 +206,7 @@ Reflection.prototype.play = function (levelNo,gameOptions) {
 		throw "unknown tiling '"+gameOptions.tiling+"'"
 	}
 
-	// console.log("play",levelNo,gameOptions);
+	console.log("play",levelNo,tiling,gameOptions);
 
 	new Game(this,this.screen,this.store,levelNo,tiling,gameOptions);
 }

@@ -72,7 +72,7 @@ Game.prototype.generate = function () {
 
 	//empty seems to always be 1 more than it should be at this point but I can't see why because I'm tired~~~
 	// console.log(empty,"empty tiles remain");
-	if (empty > 0) this.grid.fillInTheBlanks();
+	if (empty > 0) this.grid.fill_in_the_blanks();
 
 	// game_log ("game",2,"nodes & lit: "+this.grid.nodes.length+" & "+this.grid.lit);
 
@@ -239,10 +239,10 @@ Game.prototype.add_sources = function (sourceCount,colours) {
 	var colourIndex = 0
 	var colour = "red"
 	while (grid.sources.length < sourceCount) {
-		var randomXY = grid.tiling.randomTile();
+		var randomXY = grid.random_tile();
 		var x = randomXY[0];
 		var y = randomXY[1];
-		if (grid.tileExists(x,y)) continue;
+		if (grid.tile_exists(x,y)) continue;
 
 		while(colours[colour] == 0) {
 			colourIndex++;

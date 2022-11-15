@@ -41,38 +41,27 @@ TriHexagonal.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/12));
 }
 
-TriHexagonal.prototype.newGrid = function (grid) {
-	return new TriHexagonalGrid(grid,this);
+// create sized shapes for a new grid
+TriHexagonal.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.triangle = this.triangle.newTriangle(grid);
+	shapes.hexagon = this.hexagon.newHexagon(grid);
+	return shapes;
 }
 
-function TriHexagonalGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
+TriHexagonal.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 4*grid.size - 1;
 	grid.yMax = 4*grid.size - 1;
-
-	this.calculateDimensions();
-	this.triangle = this.tiling.triangle.newTriangle(grid);
-	this.hexagon = this.tiling.hexagon.newHexagon(grid);
-	this.shapes = [this.triangle,this.hexagon];
-}
-
-TriHexagonalGrid.prototype = new TilingGrid();
-
-TriHexagonalGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 		tilePixels = grid.yPixels/(2*Q3*grid.size);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 		tilePixels = grid.xPixels/(4*grid.size + 1);
 	}
 	grid.tilePixels = tilePixels;
@@ -82,45 +71,40 @@ TriHexagonalGrid.prototype.calculateDimensions = function () {
 	grid.scrollWidth = grid.xPixels - tilePixels;
 	grid.scrollHeight = grid.yPixels;
 
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	for (var column = 0; column <= grid.xMax; column++) {
-		this.columnLocations.push((column + 1)*tilePixels);
+		grid.columnLocations.push((column + 1)*tilePixels);
 	}
 
-	this.rowLocations = {hexagon: {flat: []}, triangle: {down: [], up: []}};
+	grid.rowLocations = {hexagon: {flat: []}, triangle: {down: [], up: []}};
 	for (var row = 0; row <= grid.yMax; row++) {
 		var rowLocation = Math.floor(row*Q3*tilePixels/2);
 
-		this.rowLocations.hexagon.flat.push(rowLocation);
-		this.rowLocations.triangle.down.push(rowLocation + tilePixels/(2*Q3));
+		grid.rowLocations.hexagon.flat.push(rowLocation);
+		grid.rowLocations.triangle.down.push(rowLocation + tilePixels/(2*Q3));
 
 		// the up triangles in row 0 actually appear at the bottom
 		// so this bit is messy but it makes other things cleaner
 		if (row == 0) {
-			this.rowLocations.triangle.up.push(grid.yPixels - tilePixels/(2*Q3));
+			grid.rowLocations.triangle.up.push(grid.yPixels - tilePixels/(2*Q3));
 		} else {
-			this.rowLocations.triangle.up.push(rowLocation - tilePixels/(2*Q3));
+			grid.rowLocations.triangle.up.push(rowLocation - tilePixels/(2*Q3));
 		}
 	}
 }
 
-TriHexagonalGrid.prototype.resizeShapes = function () {
-	this.triangle.resize();
-	this.hexagon.resize();
-}
-
 // hexagons in the odd-numbered rows
-TriHexagonalGrid.prototype.shape = function (x,y) {
+TriHexagonal.prototype.shape = function (shapes, x, y) {
 	if (modulo(y,2) == 0) {
-		return this.triangle;
+		return shapes.triangle;
 	} else {
-		return this.hexagon;
+		return shapes.hexagon;
 	}
 }
 
 // all hexagons are flat
 // up and down triangles alternate
-TriHexagonalGrid.prototype.orientation = function (x,y) {
+TriHexagonal.prototype.orientation = function (x ,y) {
 	if (modulo(y,2) == 1) {
 		return "flat";
 	} else if (modulo(x + y/2,2) == 0) {
@@ -131,10 +115,10 @@ TriHexagonalGrid.prototype.orientation = function (x,y) {
 }
 
 // odd numbered rows only use every second column
-TriHexagonalGrid.prototype.randomTile = function () {
+TriHexagonal.prototype.random_tile = function (maxX, maxY) {
 	while (true) {
-		var x = Math.floor(Math.random()*(this.grid.xMax + 1));
-		var y = Math.floor(Math.random()*(this.grid.yMax + 1));
+		var x = Math.floor(Math.random()*(maxX + 1));
+		var y = Math.floor(Math.random()*(maxY + 1));
 		if ((modulo(x,2) == 1 && modulo(y,4) == 1) || 
 			(modulo(x,2) == 0 && modulo(y,4) == 3)) continue;
 		break;
@@ -142,144 +126,93 @@ TriHexagonalGrid.prototype.randomTile = function () {
 	return [x,y];
 }
 
-TriHexagonalGrid.prototype.neighbour = function (x,y,direction) {
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: opposite_direction(direction)
-	}
+TriHexagonal.prototype.neighbour = function (x, y, direction, gridSize) {
+	/* See also truncated hexagonal
+	the northward pointing triangles in row 0 are actually at the bottom of the screen
+	so if we've gone north and arrived at y = 0, then we crossed the edge, 
+	and vice-versa when travelling south and arriving at y == 1
+	in both of these cases, increase y by maxY + 1, so that grid.neighbour
+	knows we've crossed the edge (continuous v non-continuous behaviour)
+	similarly, when travelling sww or see and arriving at maxY + 1, we haven't
+	actually crossed the edge, so set y to be zero, and vice versa when travelling
+	nee or nww and arriving at -1 */
+	var maxY = 4*gridSize - 1
 
 	switch (direction) {
-		case "n":
-			neighbour.y--;
-			if (neighbour.y < 0) neighbour.y = this.grid.yMax;
-			// the northward pointing triangles in row 0 are actually at the bottom of the screen so			if (neighbour.y < 0) {
-			if (!this.grid.yContinuous && (neighbour.y == 0 || neighbour.y == this.grid.yMax)) return null;
-			break;
-		case "nee":
-			neighbour.x++;
-			neighbour.y--;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			if (neighbour.y < 0) neighbour.y = this.grid.yMax;
-			break;
-		case "see": 
-			neighbour.x++;
-			neighbour.y++;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			if (neighbour.y > this.grid.yMax) neighbour.y = 0;
-			break;
-		case "s":
-			neighbour.y++;
-			if (neighbour.y > this.grid.yMax) neighbour.y = 0;
-			// the northward pointing triangles in row 0 are actually at the bottom of the screen so			if (neighbour.y < 0) {
-			if (!this.grid.yContinuous && (neighbour.y == 0 || neighbour.y == 1)) return null;
-			break;
-		case "sww":
-			neighbour.x--;
-			neighbour.y++;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax;
-			if (neighbour.y > this.grid.yMax) neighbour.y = 0;
-			break;
-		case "nww":
-			neighbour.x--;
-			neighbour.y--;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax;
-			if (neighbour.y < 0) neighbour.y = this.grid.yMax;
-			break;
+		case "n":        y--; if (y == 0)        y = maxY + 1; break;
+		case "nee": x++; y--; if (y == -1)       y = maxY;     break;
+		case "see": x++; y++; if (y == maxY + 1) y = 0;        break;
+		case "s":        y++; if (y == 1)        y = maxY + 2; break;
+		case "sww": x--; y++; if (y == maxY + 1) y = 0;        break;
+		case "nww": x--; y--; if (y == -1)       y = maxY;     break;
 	}
 
-	return neighbour;
+	return [x,y];
 }
 
-TriHexagonalGrid.prototype.eachTile = function (tileFunction) {
-	for (var y = 0; y <= this.grid.yMax; y ++) {
+TriHexagonal.prototype.each_tile = function (maxX, maxY, tileFunction) {
+	for (var y = 0; y <= maxY; y ++) {
 		var xInit = modulo(y,4) == 3 ? 1 : 0;
 		var xIncr = modulo(y,2) == 0 ? 1 : 2;
-		for (var x = xInit; x <= this.grid.xMax; x += xIncr) {
+		for (var x = xInit; x <= maxX; x += xIncr) {
 			tileFunction(x,y);
 		}
 	}
 }
 
-TriHexagonalGrid.prototype.tileLocation = function (x,y,rotation) {
-	var shape = this.shape(x,y);
+TriHexagonal.prototype.tile_location = function (grid, x, y) {
+	var shape = this.shape(grid.shapes,x,y);
 	var orientation = this.orientation(x,y);
 
 	// get pixels based on row and column
-	var xPixel = this.columnLocations[x];
-	var yPixel = this.rowLocations[shape.name][orientation][y];
+	var xPixel = grid.columnLocations[x];
+	var yPixel = grid.rowLocations[shape.name][orientation][y];
 
 	return [xPixel,yPixel];
 }
 
 // return the x,y of the tile that the pixel position is inside of
-TriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var gridSize = this.grid.size;
-	var tileSize = this.grid.tilePixels;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
-	var x;
-	var y;
-
-	// check we are inside the grid
-	if (xPixel < 0)                   return []; // beyond the left edge
-	if (xPixel > xPixels)             return []; // beyond the right edge
-	if (yPixel < 0)                   return []; // beyond the top edge
-	if (yPixel > yPixels)             return []; // beyond the bottom edge
-
+TriHexagonal.prototype.tile_at = function (grid, xPixel, yPixel) {
 	// determine the x,y,z of the triangle
 	// same as for triangular
 	// in this case, each triangle either corresponds to one triangle tile,
 	//    or one-sixth of a hexagon tile
-	var xTriangle = Math.floor((xPixel + yPixel/Q3)/tileSize + 1/2 - xScroll - yScroll/2);
-	var yTriangle = Math.floor(2*yPixel/(Q3*tileSize)) - yScroll;
-	var zTriangle = Math.floor(((xPixels - xPixel) + yPixel/Q3)/tileSize + 1/2 + xScroll - yScroll/2);
-	// console.log("triangle @",xTriangle,yTriangle,zTriangle);
+	var xTriangle = Math.floor((xPixel + yPixel/Q3)/grid.tilePixels + 1/2 - grid.xScroll - grid.yScroll/2);
+	var yTriangle = Math.floor(2*yPixel/(Q3*grid.tilePixels)) - grid.yScroll;
+	var zTriangle = Math.floor(((grid.xPixels - xPixel) + yPixel/Q3)/grid.tilePixels + 1/2 + grid.xScroll - grid.yScroll/2);
 
+	var x;
+	var y;
 	if (modulo(xTriangle,2) == 1 && modulo(yTriangle,2) == 1 && modulo(zTriangle,2) == 0) {
 		// up triangle
 		y = yTriangle + 1;
-		x = 2*((xTriangle - zTriangle - 1)/4 + gridSize);
-		// console.log("up triangle @",x,y);
+		x = 2*((xTriangle - zTriangle - 1)/4 + grid.size);
 	} else if (modulo(xTriangle,2) == 0 && modulo(yTriangle,2) == 0 && modulo(zTriangle,2) == 1) {
 		// down triangle
 		y = yTriangle;
-		x = 2*((xTriangle - zTriangle - 1)/4 + gridSize);
-		// console.log("down triangle @",x,y);
+		x = 2*((xTriangle - zTriangle - 1)/4 + grid.size);
 	} else {
 		// hexagon
 		y = modulo(yTriangle,2) == 0 ? yTriangle + 1 : yTriangle;
-		x = Math.floor(2*((xTriangle - zTriangle)/4 + gridSize));
+		x = Math.floor(2*((xTriangle - zTriangle)/4 + grid.size));
 
 		if ((modulo(y,4) == 1 && modulo(x,2) == 1)
 		  || modulo(y,4) == 3 && modulo(x,2) == 0) {
 			x--;
 		}
-		// console.log("hexagon @",x,y);
 	}
-
-	x = modulo(x,(xMax + 1));
-	y = modulo(y,(yMax + 1));
-	// console.log("tile @",x,y);
 
 	return [x,y];
 }
 
-TriHexagonalGrid.prototype.updateScroll = function () {
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
+// return the horizontal offset in pixels
+// based on the current scroll position
+TriHexagonal.prototype.x_scroll_pixel = function (xScroll,tilePixels) {
+	return xScroll*tilePixels;
+}
 
-	xScroll = modulo(xScroll,this.grid.xMax + 1);
-	yScroll = modulo(yScroll,this.grid.yMax + 1);
-
-	this.grid.xScrollPixel = xScroll*this.grid.tilePixels;
-	this.grid.yScrollPixel = yScroll*Q3*this.grid.tilePixels/2;
-
-	this.grid.xScroll = xScroll;
-	this.grid.yScroll = yScroll;
+// return the vertical offset in pixels
+// based on the current scroll position
+TriHexagonal.prototype.y_scroll_pixel = function (yScroll,tilePixels) {
+	return yScroll*Q3*tilePixels/2;
 }

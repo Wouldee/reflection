@@ -380,7 +380,7 @@ HexagonTile.prototype.addAdditionalLinks = function (tile) {
 			this.addFormLink(tile,tile.rotation,3);
 			break;
 	}
-	this.grid.connectorFinished();
+	this.grid.connector_finished();
 }
 
 HexagonTile.prototype.imageCanvas = function () {

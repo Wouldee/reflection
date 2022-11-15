@@ -25,11 +25,6 @@ function BoundedTriangular (shapes) {
 
 BoundedTriangular.prototype = new Tiling();
 
-//~~~what is this for~~~
-Tiling.prototype.level_button = function () {
-	throw "level_button function not defined for "+this.name;
-}
-
 BoundedTriangular.prototype.x_pixels = function (yPixels, size) {
 	return 2*yPixels/Q3;
 }
@@ -47,51 +42,26 @@ BoundedTriangular.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/4));
 }
 
-BoundedTriangular.prototype.maxSize = function (xPixels,yPixels) {
-	if (this.x_pixels(yPixels,size) < xPixels) {
-		// tile size is restricted by the screen height
-		tilePixels = 2 * grid.yPixels/(2*Q3*grid.size);
-		return Math.floor(yPixels / (Q3*tilePixels));
-	} else {
-		return Math.floor((2*xPixels/tilePixels - 1) / 4);
-	}
+// create sized shapes for a new grid
+BoundedTriangular.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.triangle = this.triangle.newTriangle(grid);
+	return shapes;
 }
 
-BoundedTriangular.prototype.newGrid = function (grid) {
-	return new BoundedTriangularGrid(grid,this);
-}
-
-function BoundedTriangularGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
-	// ensure continuous x & y are set to false
-	grid.xContinuous = false;
-	grid.yContinuous = false;
-
+BoundedTriangular.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 2*grid.size - 1;
 	grid.yMax = 2*grid.size - 1;
-
-	this.calculateDimensions();
-	this.triangle = this.tiling.triangle.newTriangle(grid);
-	this.shapes = [this.triangle];
-}
-
-BoundedTriangularGrid.prototype = new TilingGrid();
-
-BoundedTriangularGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 		tilePixels = grid.yPixels/(Q3*grid.size);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 		tilePixels = grid.xPixels/(2*grid.size);
 	}
 	grid.tilePixels = tilePixels;
@@ -101,33 +71,28 @@ BoundedTriangularGrid.prototype.calculateDimensions = function () {
 	grid.scrollWidth = grid.xPixels;
 	grid.scrollHeight = grid.yPixels;
 
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	for (var column = 0; column <= 2*grid.xMax; column++) {
 		var x = tilePixels*(column + 1)/2;
-		this.columnLocations.push(x);
+		grid.columnLocations.push(x);
 	}
 
-	this.rowLocations = [];
+	grid.rowLocations = [];
 	for (var row = 0; row <= 2*grid.yMax; row++) {
 		if (row%2 == 0) {
 			var y = tilePixels*(3*row + 2)/(4*Q3);
 		} else {
 			var y = tilePixels*(3*row + 1)/(4*Q3);
 		}
-		this.rowLocations.push(y);
+		grid.rowLocations.push(y);
 	}
 }
 
-
-BoundedTriangularGrid.prototype.resizeShapes = function () {
-	this.triangle.resize();
+BoundedTriangular.prototype.shape = function (shapes, x, y) {
+	return shapes.triangle;
 }
 
-BoundedTriangularGrid.prototype.shape = function () {
-	return this.triangle;
-}
-
-BoundedTriangularGrid.prototype.orientation = function (x,y) {
+BoundedTriangular.prototype.orientation = function (x, y) {
 	if (Math.min(x,y) % 2 == 0) {
 		// point is downward
 		return 'down';
@@ -137,69 +102,23 @@ BoundedTriangularGrid.prototype.orientation = function (x,y) {
 	}
 }
 
-// xCont
-BoundedTriangularGrid.prototype.neighbour = function (x,y,direction) {
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: direction
-	}
-
+// return x, y of the tile neighbouring x, y in the given direction
+BoundedTriangular.prototype.neighbour = function (x, y, direction, gridSize) {
 	switch (direction) {
-		case "n":
-			if (x < y) {
-				neighbour.x++;
-			} else {
-				neighbour.y--;
-				if (neighbour.y < 0) return null;
-			}
-			neighbour.direction = "s";
-			break;
-		case "see": 
-			neighbour.x++;
-			neighbour.y++;
-			if (neighbour.x > this.grid.xMax || neighbour.y > this.grid.yMax) return null;
-			neighbour.direction = "nww";
-			break;
-		case "sww":
-			if (y < x) {
-				neighbour.y++;
-			} else {
-				neighbour.x--;
-				if (neighbour.x < 0) return null;
-			}
-			neighbour.direction = "nee";
-			break;
-		case "nww":
-			neighbour.x--;
-			neighbour.y--;
-			neighbour.direction = "see";
-			break;
-		case "nee":
-			if (x < y) {
-				neighbour.x++;
-			} else {
-				neighbour.y--;
-			}
-			neighbour.direction = "sww";
-			break;
-		case "s":
-			if (y < x) {
-				neighbour.y++;
-			} else {
-				neighbour.x--;
-			}
-			neighbour.direction = "n";
-			break;
+		case "n":   if (x <  y) x++; else y--; break;
+		case "see":             x++;      y++; break;
+		case "sww": if (x <= y) x--; else y++; break;
+		case "nww":             x--;      y--; break;
+		case "nee": if (x < y)  x++; else y--; break;
+		case "s":   if (x <= y) x--; else y++; break;
 	}
 
-	return neighbour;
+	return [x,y];
 }
 
 // xCont
 // return the x y pixel at the centre of the tile
-BoundedTriangularGrid.prototype.tileLocation = function (x,y,rotation) {
-
+BoundedTriangular.prototype.tile_location = function (grid, x, y) {
 	if (x > y) {
 		var column = Math.floor((4*x - y)/2);
 		var row = y;
@@ -209,36 +128,30 @@ BoundedTriangularGrid.prototype.tileLocation = function (x,y,rotation) {
 	}
 
 	// get pixels based on row and column~~~
-	var xPixel = this.columnLocations[column];
-	var yPixel = this.rowLocations[row];
+	var xPixel = grid.columnLocations[column];
+	var yPixel = grid.rowLocations[row];
 
 	return [xPixel,yPixel];
 }
 
 // xCont
 // return the x,y of the tile that the pixel position is inside of
-BoundedTriangularGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var size = this.grid.size;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-
-	var x;
-	var y;
-
+BoundedTriangular.prototype.tile_at = function (grid,xPixel,yPixel) {
 	// check we are inside the (triangular-shaped) grid
-	if (yPixel < 0)                     return []; // beyond the top
 	if (yPixel > Q3*xPixel)             return []; // beyond the left edge
-	if (yPixel > Q3*(xPixels - xPixel)) return []; // beyond the right edge
+	if (yPixel > Q3*(grid.xPixels - xPixel)) return []; // beyond the right edge
 
 	// determine the rank and depth of the tile
 	// depth is basically which row
-	var depth = Math.floor(2*size*yPixel/yPixels);
+	var depth = Math.floor(2*grid.size*yPixel/grid.yPixels);
 
 	// rank is which 'coloumn', i.e distance from the top-left corner
-	var rank = Math.floor(2*size*(Q3*xPixel + yPixel)/(2*yPixels))
+	var rank = Math.floor(2*grid.size*(Q3*xPixel + yPixel)/(2*grid.yPixels))
 
 	// now determine whether this is the up or the down triangle inside the diamond
-	if (yPixel <= Q3*(xPixel - (xPixels*(rank - depth)/(2*size)))) {
+	var x;
+	var y;
+	if (yPixel <= Q3*(xPixel - (grid.xPixels*(rank - depth)/(2*grid.size)))) {
 		// down
 		if (rank >= 2*depth) {
 			x = rank;
@@ -261,30 +174,33 @@ BoundedTriangularGrid.prototype.tileAt = function (xPixel,yPixel) {
 	return [x,y];
 }
 
-BoundedTriangularGrid.prototype.updateScroll = function () {}
+// return the horizontal offset in pixels
+// based on the current scroll position
+BoundedTriangular.prototype.x_scroll_pixel = function (xScroll,tilePixels) {}
 
-BoundedTriangularGrid.prototype.clipScreen = function () {
-	var grid = this.grid;
-	var screen = this.grid.screen;
+// return the vertical offset in pixels
+// based on the current scroll position
+BoundedTriangular.prototype.y_scroll_pixel = function (yScroll,tilePixels) {}
 
+BoundedTriangular.prototype.clip_perimeter = function (grid) {
 	// clear the outer area
 	var x = grid.x;
 	var y = grid.y;
 	var width = grid.xPixels;
 	var height = grid.yPixels;
 
-	// clip the area
-	screen.context.save();
-	screen.context.beginPath();
-	screen.context.moveTo(x,y);
-	screen.context.lineTo(x + width,y);
-	screen.context.lineTo(x + width/2,y + height);
-	screen.context.lineTo(x,y);
-	screen.context.clip();
+	// clear a triangular shaped area
+	grid.screen.context.save();
+	grid.screen.context.beginPath();
+	grid.screen.context.moveTo(x,y);
+	grid.screen.context.lineTo(x + width,y);
+	grid.screen.context.lineTo(x + width/2,y + height);
+	grid.screen.context.lineTo(x,y);
+	grid.screen.context.clip();
 
-	screen.context.clearRect(x, y, width, height);
+	grid.screen.context.clearRect(x, y, width, height);
 
 	// fill with the background colour
-	screen.context.fillStyle = screen.colour;
-	screen.context.fillRect(x,y,width,height);
+	grid.screen.context.fillStyle = grid.screen.colour;
+	grid.screen.context.fillRect(x,y,width,height);
 }

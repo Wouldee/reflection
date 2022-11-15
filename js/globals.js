@@ -2,8 +2,13 @@
 // set any global vars, create reflection object (the game, init?)
 function init () {
 	HOST = "localhost"
+
+	// SHUFFLE = false;
 	SHUFFLE = true;
+
+	// ROTATE = false;
 	ROTATE = true;
+
 	Q2 = Math.sqrt(2);
 	Q3 = Math.sqrt(3);
 	RAD = Math.PI/180;
@@ -21,8 +26,8 @@ function init () {
 		"filter": 0,
 		"grid": 0,
 		"image": 0,
-		"path": 3,
-		"tile": 3,
+		"path": 0,
+		"tile": 0,
 		"triangular": 0,
 		"squares": 0,
 		"long-tri": 0,
@@ -155,8 +160,8 @@ function init () {
 	LEVELS[16] = {tiling : "rhombitrihexagonal", size : "large"};
 	LEVELS[17] = {tiling : "hexagonal", size : "huge", growth : "straight"};
 	LEVELS[18] = {tiling : "truncated-square", size : "large", growth : "straight"};
-	LEVELS[19] = {tiling : "truncated-hexagonal", size : "medium", growth : "straight"};
-	LEVELS[20] = {tiling : "truncated-trihexagonal", size : "huge", growth : "prism"};
+	LEVELS[19] = {tiling : "extended-square", size : "medium", growth : "straight"};
+	LEVELS[20] = {tiling : "extended-hexagonal", size : "huge"};
 
 	run_test();
 

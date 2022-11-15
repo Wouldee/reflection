@@ -70,15 +70,17 @@ Game.prototype.add_arm_from = function (x,y,direction,tilesAdded,linkId) {
 	game_log("generate",logLevel,"adding new arm to "+tileFrom.description()+", link "+linkId+" from "+direction);
 
 	// is there a neighbour location
-	var neighbour = this.grid.tiling.neighbour(xFrom,yFrom,directionFrom);
+	var neighbour = this.grid.neighbour(xFrom,yFrom,directionFrom);
 	game_log("generate",3,"neighbour",neighbour);
 	if (neighbour == null) return false;
 	var xTo = neighbour.x;
 	var yTo = neighbour.y;
 	var directionTo = neighbour.direction;
 
+	// console.log("neighbour = ",neighbour);
+
 	var tileTo = null;
-	if (this.grid.tileExists(xTo,yTo)) {
+	if (this.grid.tile_exists(xTo,yTo)) {
 		// check the tileTo can be added to
 		tileTo = this.grid.tile(xTo,yTo);
 		switch (this.check_add_link_to(tileTo,directionTo,possibleLinks)) {
@@ -124,7 +126,7 @@ Game.prototype.add_arm_from = function (x,y,direction,tilesAdded,linkId) {
 		// no tile exists yet
 		// create new tile at the neighbour
 		// add it to the new tiles
-		var tileTo = this.grid.createTile(xTo,yTo);
+		var tileTo = this.grid.create_tile(xTo,yTo);
 		newTile = [xTo,yTo];
 		game_log("generate",1,"added new tile @ "+xTo+","+yTo);
 	} else {
@@ -243,7 +245,7 @@ Game.prototype.remove_arm_from = function (x,y,direction,tilesAdded,linkId) {
 	if (linkFrom.arms.indexOf(directionFrom) < 0) return; // link may not have arm in this direction
 
 	// load the neighbour
-	var neighbour = this.grid.tiling.neighbour(xFrom,yFrom,directionFrom);
+	var neighbour = this.grid.neighbour(xFrom,yFrom,directionFrom);
 	game_log("generate",3,"neighbour",neighbour);
 	var tileTo = this.grid.tile(neighbour.x,neighbour.y);
 	var directionTo = neighbour.direction;
@@ -262,7 +264,7 @@ Game.prototype.remove_arm_from = function (x,y,direction,tilesAdded,linkId) {
 
 	// if the tile has no more links, reset it
 	if (tileTo.linkCount == 0) {
-		this.grid.removeTile(tileTo.x,tileTo.y);
+		this.grid.remove_tile(tileTo.x,tileTo.y);
 		game_log("generate",1,"removed tile @"+tileTo.x+","+tileTo.y);
 		// also remove the tile from the tilesAdded array
 		for (var index in tilesAdded) {

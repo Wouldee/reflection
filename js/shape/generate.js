@@ -238,7 +238,7 @@ Game.prototype.add_sources = function (sourceCount,colours) {
 	var colourIndex = 0
 	var colour = "red"
 	while (grid.sources.length < sourceCount) {
-		var randomXY = grid.tiling.randomTile();
+		var randomXY = grid.random_tile();
 		var x = randomXY[0];
 		var y = randomXY[1];
 		if (grid.tileExists(x,y)) continue;

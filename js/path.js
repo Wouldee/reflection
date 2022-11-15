@@ -17,7 +17,7 @@ function Path (grid,source,link) {
 
 	this.sourceSegment.add_from("centre",null);
 
-	this.grid.newPath(this);
+	this.grid.new_path(this);
 }
 
 Path.prototype.source_tile = function () {
@@ -176,7 +176,7 @@ Path.prototype.propagate = function (fromTile,fromLink,fromOutDirection,affected
 	game_log("path",2,"segment",fromSegmentId,"does not yet go to the",fromOutDirection);
 
 	// load the neighbouring tile
-	var neighbour = this.grid.tiling.neighbour(fromTile.x,fromTile.y,fromOutDirection);
+	var neighbour = this.grid.neighbour(fromTile.x,fromTile.y,fromOutDirection);
 	if (neighbour == null) return;
 
 	var tile = this.grid.tile(neighbour.x,neighbour.y);

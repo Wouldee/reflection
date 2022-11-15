@@ -100,7 +100,7 @@ TriangleTile.prototype.definePoints = function () {
 
 // create a blank tile
 // default function creates a straight
-TriangleTile.prototype.blankTile = function (tile) {
+TriangleTile.prototype.blank_tile = function (tile) {
 	tile.image = this.images.source.frame.back;
 	tile.connector();
 }

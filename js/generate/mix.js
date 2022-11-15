@@ -39,7 +39,7 @@ Game.prototype.add_path_mixes = function (mixMax) {
 			if (tile.faces[direction].length > 0) continue;
 
 			// check there is a neighbour
-			var neighbour = this.grid.tiling.neighbour(tile.x,tile.y,direction);
+			var neighbour = this.grid.neighbour(tile.x,tile.y,direction);
 			if (neighbour == null) continue;
 
 			// check is the neighbour a node - node mixing is done separately
@@ -115,7 +115,7 @@ Game.prototype.add_node_mixes = function (mixMax) {
 		var directions = node.shape.randomDirections(node.orientation);
 		for (var direction of directions) {
 			// check there is a neighbour
-			var neighbour = this.grid.tiling.neighbour(node.x,node.y,direction);
+			var neighbour = this.grid.neighbour(node.x,node.y,direction);
 			if (neighbour == null) continue;
 
 			// check neighbour has no path in this direction

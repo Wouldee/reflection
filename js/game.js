@@ -557,7 +557,7 @@ Game.prototype.click = function (xPixel,yPixel,mouseButton,buttonDown) {
 	console.log("click");
 
 	var direction = mouseButton == "right" ? "anticlockwise" : "clockwise";
-	if (this.grid.rotateAt(xPixel,yPixel,direction)) {
+	if (this.grid.rotate_at(xPixel,yPixel,direction)) {
 		this.moves++;
 		this.updateMoves();
 		this.updateLitCount(this.grid.lit);
@@ -657,7 +657,8 @@ Game.prototype.resume = function () {
 	}
 
 	// redraw the grid
-	this.grid.updateScreen();
+	// try using just draw_screen instead~~~
+	this.grid.update_screen();
 
 	// resume redirecting clicks to the grid
 	this.paused = false;
@@ -761,7 +762,8 @@ Game.prototype.closeCentralPanel = function () {
 	this.centralPanel = null;
 
 	// redraw the grid
-	this.grid.updateScreen();
+	// try using just draw_screen instead~~~
+	this.grid.update_screen();
 
 }
 

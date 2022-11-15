@@ -40,48 +40,26 @@ Triangular.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/8));
 }
 
-// not used~~~
-Triangular.prototype.maxSize = function (xPixels,yPixels) {
-	if (this.x_pixels(yPixels,size) < xPixels) {
-		// tile size is restricted by the screen height
-		return Math.floor(yPixels / (Q3*tilePixels));
-	} else {
-		return Math.floor((2*xPixels/tilePixels - 1) / 4);
-	}
+// create sized shapes for a new grid
+Triangular.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.triangle = this.triangle.newTriangle(grid);
+	return shapes;
 }
 
-Triangular.prototype.newGrid = function (grid) {
-	return new TriangularGrid(grid,this);
-}
-
-
-function TriangularGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
+Triangular.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 4*grid.size - 1;
 	grid.yMax = 2*grid.size - 1;
-
-	this.calculateDimensions();
-	this.triangle = this.tiling.triangle.newTriangle(grid);
-	this.shapes = [this.triangle];
-}
-
-TriangularGrid.prototype = new TilingGrid();
-
-TriangularGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 		tilePixels = grid.yPixels/(Q3*grid.size);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 		tilePixels = 2*grid.xPixels/(4*grid.size + 1);
 	}
 	grid.tilePixels = tilePixels;
@@ -90,28 +68,24 @@ TriangularGrid.prototype.calculateDimensions = function () {
 	grid.scrollWidth = grid.xPixels - tilePixels/2;
 	grid.scrollHeight = grid.yPixels;
 
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	for (var column = 0; column <= grid.xMax; column++) {
-		this.columnLocations.push((column + 1)*tilePixels/2);
+		grid.columnLocations.push((column + 1)*tilePixels/2);
 	}
 
-	this.rowLocations = {down: [], up: []};
+	grid.rowLocations = {down: [], up: []};
 	for (var row = 0; row <= grid.yMax; row++) {
 		var rowLocation = Math.floor(row*Q3*tilePixels/2);
-		this.rowLocations.down.push(rowLocation + tilePixels/(2*Q3));
-		this.rowLocations.up.push(rowLocation + tilePixels/Q3);
+		grid.rowLocations.down.push(rowLocation + tilePixels/(2*Q3));
+		grid.rowLocations.up.push(rowLocation + tilePixels/Q3);
 	}
 }
 
-TriangularGrid.prototype.resizeShapes = function () {
-	this.triangle.resize();
+Triangular.prototype.shape = function (shapes, x, y) {
+	return shapes.triangle;
 }
 
-TriangularGrid.prototype.shape = function () {
-	return this.triangle;
-}
-
-TriangularGrid.prototype.orientation = function (x,y) {
+Triangular.prototype.orientation = function (x, y) {
 	if (modulo(x + y,2) == 0) {
 		// point is downward
 		return "down";
@@ -121,103 +95,55 @@ TriangularGrid.prototype.orientation = function (x,y) {
 	}
 }
 
-// xCont
-TriangularGrid.prototype.neighbour = function (x,y,direction) {
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: opposite_direction(direction)
-	}
-
+Triangular.prototype.neighbour = function (x, y, direction, gridSize) {
 	switch (direction) {
-		case "n":
-			neighbour.y--;
-			if (neighbour.y < 0) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = this.grid.yMax;
-			}
-			break;
-		case "nee":
-		case "see": 
-			neighbour.x++;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			break;
-		case "nww":
-		case "sww":
-			neighbour.x--;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax;
-			break;
-		case "s":
-			neighbour.y++;
-			if (neighbour.y > this.grid.yMax) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = 0
-			}
-			break;
+		case "n":   y--; break;
+		case "nee": x++; break;
+		case "see": x++; break;
+		case "nww": x--; break;
+		case "sww": x--; break;
+		case "s":   y++; break;
 	}
 
-	return neighbour;
+	return [x,y];
 }
 
 // return the x y pixel at the centre of the tile
-TriangularGrid.prototype.tileLocation = function (x,y,rotation) {
-	var orientation = this.orientation(x,y);
+Triangular.prototype.tile_location = function (grid, x, y) {
+	var orientation = this.orientation(x, y);
 
 	// get pixels based on row and column
-	var xPixel = this.columnLocations[x];
-	var yPixel = this.rowLocations[orientation][y];
+	var xPixel = grid.columnLocations[x];
+	var yPixel = grid.rowLocations[orientation][y];
 
 	return [xPixel,yPixel];
 }
 
 // xCont
 // return the x,y of the tile that the pixel position is inside of
-TriangularGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var gridSize = this.grid.size;
-	var tileSize = this.grid.tilePixels;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
-	var x;
-	var y;
-
-	// check we are inside the grid
-	if (xPixel < 0)                   return []; // beyond the left edge
-	if (xPixel > xPixels)             return []; // beyond the right edge
-	if (yPixel < 0)                   return []; // beyond the top edge
-	if (yPixel > yPixels)             return []; // beyond the bottom edge
-
+Triangular.prototype.tile_at = function (grid, xPixel, yPixel) {
 	// determine the x,y,z of the triangle
 	// vertical scroll affects x & z as well as y
 	// the effect of horizontal scroll is reversed on z
-	var xTriangle = Math.floor((xPixel + yPixel/Q3)/tileSize - xScroll - yScroll/2);
-	var yTriangle = Math.floor(2*yPixel/(Q3*tileSize)) - yScroll;
-	var zTriangle = Math.floor(((xPixels - xPixel) + yPixel/Q3)/tileSize + 1/2 + xScroll - yScroll/2);
+	var xTriangle = Math.floor((xPixel + yPixel/Q3)/grid.tilePixels - grid.xScroll - grid.yScroll/2);
+	var yTriangle = Math.floor(2*yPixel/(Q3*grid.tilePixels)) - grid.yScroll;
+	var zTriangle = Math.floor(((grid.xPixels - xPixel) + yPixel/Q3)/grid.tilePixels + 1/2 + grid.xScroll - grid.yScroll/2);
 	// console.log("triangle @",xTriangle,yTriangle,zTriangle);
 
-	x = xTriangle - zTriangle + 2*gridSize;
-	y = yTriangle;
-
-	x = modulo(x,(xMax + 1));
-	y = modulo(y,(yMax + 1));
+	var x = xTriangle - zTriangle + 2*grid.size;
+	var y = yTriangle;
 
 	return [x,y];
 }
 
-TriangularGrid.prototype.updateScroll = function () {
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
+// return the horizontal offset in pixels
+// based on the current scroll position
+Triangular.prototype.x_scroll_pixel = function (xScroll, tilePixels) {
+	return xScroll*tilePixels;
+}
 
-	xScroll = modulo(xScroll,this.grid.xMax + 1);
-	yScroll = modulo(yScroll,this.grid.yMax + 1);
-
-	this.grid.xScrollPixel = xScroll*this.grid.tilePixels;
-	this.grid.yScrollPixel = yScroll*Q3*this.grid.tilePixels/2;
-
-	this.grid.xScroll = xScroll;
-	this.grid.yScroll = yScroll;
+// return the vertical offset in pixels
+// based on the current scroll position
+Triangular.prototype.y_scroll_pixel = function (yScroll, tilePixels) {
+	return yScroll*Q3*tilePixels/2;
 }

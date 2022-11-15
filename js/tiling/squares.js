@@ -24,7 +24,7 @@ Squares.prototype.x_pixels = function (yPixels, size) {
 	return yPixels;
 }
 
-Squares.prototype.yPixels = function (xPixels, size) {
+Squares.prototype.y_pixels = function (xPixels, size) {
 	return xPixels;
 }
 
@@ -37,49 +37,25 @@ Squares.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/4));
 }
 
-Squares.prototype.maxSize = function (xPixels,yPixels) {
-	var tilePixels = 10; // tile size should not be less than 10
-
-	if (this.x_pixels(yPixels,size) < xPixels) {
-		// size is restricted by the screen height
-		return Math.floor(yPixels / (2*tilePixels));
-	} else {
-		// size is restricted by screen width
-		return Math.floor(xPixels / (2*tilePixels));
-	}
+Squares.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.square = this.square.newSquare(grid);
+	return shapes;
 }
 
-Squares.prototype.newGrid = function (grid) {
-	return new SquaresGrid(grid,this);
-}
-
-function SquaresGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
+Squares.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 2*grid.size - 1;
 	grid.yMax = 2*grid.size - 1;
-
-	this.calculateDimensions();
-	this.square = tiling.square.newSquare(grid);
-	this.shapes = [this.square];
-}
-
-SquaresGrid.prototype = new TilingGrid();
-
-SquaresGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 		tilePixels = grid.yPixels / (2*grid.size);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 		tilePixels = grid.xPixels / (2*grid.size);
 	}
 	grid.tilePixels = tilePixels;
@@ -88,117 +64,53 @@ SquaresGrid.prototype.calculateDimensions = function () {
 	grid.scrollWidth = grid.xPixels;
 	grid.scrollHeight = grid.yPixels;
 
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	for (var column = 0; column <= grid.xMax; column++) {
 		//grid.columnLocations.push(this.columnLocations(column));
-		this.columnLocations.push(column*tilePixels + tilePixels/2);
+		grid.columnLocations.push(column*tilePixels + tilePixels/2);
 	}
 
 	this.rowLocations = [];
 	for (var row = 0; row <= grid.yMax; row++) {
 		//grid.rowLocations.push(this.rowLocations(row));
-		this.rowLocations.push(row*tilePixels + tilePixels/2);
+		grid.rowLocations.push(row*tilePixels + tilePixels/2);
 	}
 }
 
-
-SquaresGrid.prototype.resizeShapes = function () {
-	this.square.resize();
+Squares.prototype.shape = function (shapes, x, y) {
+	return shapes.square;
 }
 
-SquaresGrid.prototype.shape = function () {
-	return this.square;
-}
-
-SquaresGrid.prototype.orientation = function () {
+Squares.prototype.orientation = function (x, y) {
 	return "straight";
 }
 
-SquaresGrid.prototype.neighbour = function (x,y,direction) {
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: direction
-	}
-
+Squares.prototype.neighbour = function (x, y, direction, gridSize) {
 	switch (direction) {
-		case "n":
-			neighbour.y--;
-			if (neighbour.y < 0) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = this.grid.yMax;
-			}
-			neighbour.direction = "s";
-			break;
-
-		case "e":
-			neighbour.x++;
-			if (neighbour.x > this.grid.xMax) {
-				if (!this.grid.xContinuous) return null;
-				neighbour.x = 0;
-			}
-			neighbour.direction = "w";
-			break;
-
-		case "s":
-			neighbour.y++;
-			if (neighbour.y > this.grid.yMax) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = 0;
-			}
-			neighbour.direction = "n";
-			break;
-
-		case "w":
-			neighbour.x--;
-			if (neighbour.x < 0) {
-				if (!this.grid.xContinuous) return null;
-				neighbour.x = this.grid.xMax;
-			}
-			neighbour.direction = "e";
-			break;
+		case "n": y--; break;
+		case "e": x++; break;
+		case "s": y++; break;
+		case "w": x--; break;
 	}
-
-	return neighbour;
-}
-
-// return the x,y of the tile that the pixel position is inside of
-SquaresGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
-	var x;
-	var y;
-
-	// check we are inside the grid
-	if (xPixel < 0)                   return []; // beyond the left edge
-	if (xPixel > xPixels)             return []; // beyond the right edge
-	if (yPixel < 0)                   return []; // beyond the top edge
-	if (yPixel > yPixels)             return []; // beyond the bottom edge
-
-	x = Math.floor((xMax + 1)*xPixel/xPixels - xScroll);
-	y = Math.floor((yMax + 1)*yPixel/yPixels - yScroll);
-
-	x = modulo(x,(xMax + 1));
-	y = modulo(y,(yMax + 1));
 
 	return [x,y];
 }
 
-SquaresGrid.prototype.updateScroll = function () {
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
+// return the x,y of the tile that the pixel position is inside of
+Squares.prototype.tile_at = function (grid, xPixel, yPixel) {
+	var x = Math.floor((grid.xMax + 1)*xPixel/grid.xPixels - grid.xScroll);
+	var y = Math.floor((grid.yMax + 1)*yPixel/grid.yPixels - grid.yScroll);
+	return [x,y];
+}
 
-	xScroll = modulo(xScroll,this.grid.xMax + 1);
-	yScroll = modulo(yScroll,this.grid.yMax + 1);
+// return the horizontal offset in pixels
+// based on the current scroll position
+Squares.prototype.x_scroll_pixel = function (xScroll, tilePixels) {
+	return xScroll*tilePixels;
+}
 
-	this.grid.xScrollPixel = xScroll*this.grid.tilePixels;
-	this.grid.yScrollPixel = yScroll*this.grid.tilePixels;
-
-	this.grid.xScroll = xScroll;
-	this.grid.yScroll = yScroll;
+// return the vertical offset in pixels
+// based on the current scroll position
+Squares.prototype.y_scroll_pixel = function (yScroll, tilePixels) {
+	return yScroll*tilePixels;
 }

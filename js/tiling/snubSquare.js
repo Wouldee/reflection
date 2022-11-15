@@ -42,38 +42,26 @@ SnubSquare.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/12));
 }
 
-SnubSquare.prototype.newGrid = function (grid) {
-	return new SnubSquareGrid(grid,this);
+// create sized shapes for a new grid
+SnubSquare.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.triangle = this.triangle.newTriangle(grid);
+	shapes.square = this.square.newSquare(grid);
+	return shapes;
 }
 
-
-function SnubSquareGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
+SnubSquare.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 4*grid.size - 1;
 	grid.yMax = 4*grid.size - 1;
-
-	this.calculateDimensions();
-	this.triangle = this.tiling.triangle.newTriangle(grid);
-	this.square = this.tiling.square.newSquare(grid);
-	this.shapes = [this.triangle,this.square];
-}
-
-SnubSquareGrid.prototype = new TilingGrid();
-
-SnubSquareGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 	}
 	tilePixels = 2*grid.xPixels/(2*(Q3 + 1)*grid.size + 1);
 	grid.tilePixels = tilePixels;
@@ -83,8 +71,8 @@ SnubSquareGrid.prototype.calculateDimensions = function () {
 	grid.scrollHeight = grid.yPixels - tilePixels/2;
 
 	// calculate the location of every column and row for efficiency
-	this.columnLocations = {square: {right: [], left: []}, triangle: {up: [], right: [], down: [], left: []}};
-	this.rowLocations = {square: {right: [], left: []}, triangle: {up: [], right: [], down: [], left: []}};
+	grid.columnLocations = {square: {right: [], left: []}, triangle: {up: [], right: [], down: [], left: []}};
+	grid.rowLocations = {square: {right: [], left: []}, triangle: {up: [], right: [], down: [], left: []}};
 
 	var triangleHeight = Q3*tilePixels/2;
 	var scrollCellSize = (Q3 + 1)*tilePixels/2;
@@ -95,19 +83,19 @@ SnubSquareGrid.prototype.calculateDimensions = function () {
 		// even-numbered columns contain squares and left and right triangles
 		// up and down triangles in the odd-numbered columns
 		if (modulo(column,2) == 0) {
-			this.columnLocations.square.right.push(columnLocation + scrollCellSize/2);
-			this.columnLocations.square.left.push(columnLocation + scrollCellSize/2);
-			this.columnLocations.triangle.up.push(null);
-			this.columnLocations.triangle.right.push(columnLocation + triangleHeight/3);
-			this.columnLocations.triangle.down.push(null);
-			this.columnLocations.triangle.left.push(columnLocation + tilePixels/2 + 2*triangleHeight/3);
+			grid.columnLocations.square.right.push(columnLocation + scrollCellSize/2);
+			grid.columnLocations.square.left.push(columnLocation + scrollCellSize/2);
+			grid.columnLocations.triangle.up.push(null);
+			grid.columnLocations.triangle.right.push(columnLocation + triangleHeight/3);
+			grid.columnLocations.triangle.down.push(null);
+			grid.columnLocations.triangle.left.push(columnLocation + tilePixels/2 + 2*triangleHeight/3);
 		} else {
-			this.columnLocations.square.right.push(null);
-			this.columnLocations.square.left.push(null);
-			this.columnLocations.triangle.up.push(columnLocation + scrollCellSize/2);
-			this.columnLocations.triangle.right.push(null);
-			this.columnLocations.triangle.down.push(columnLocation + scrollCellSize/2);
-			this.columnLocations.triangle.left.push(null);
+			grid.columnLocations.square.right.push(null);
+			grid.columnLocations.square.left.push(null);
+			grid.columnLocations.triangle.up.push(columnLocation + scrollCellSize/2);
+			grid.columnLocations.triangle.right.push(null);
+			grid.columnLocations.triangle.down.push(columnLocation + scrollCellSize/2);
+			grid.columnLocations.triangle.left.push(null);
 		}
 	}
 
@@ -117,38 +105,32 @@ SnubSquareGrid.prototype.calculateDimensions = function () {
 		// even-numbered rows contain squares and up and down triangles
 		// left & right triangles in the odd-numbered rows
 		if (modulo(row,2) == 0) {
-			this.rowLocations.square.right.push(rowLocation + scrollCellSize/2);
-			this.rowLocations.square.left.push(rowLocation + scrollCellSize/2);
-			this.rowLocations.triangle.down.push(rowLocation + triangleHeight/3);
-			this.rowLocations.triangle.right.push(null);
-			this.rowLocations.triangle.up.push(rowLocation + tilePixels/2 + 2*triangleHeight/3);
-			this.rowLocations.triangle.left.push(null);
+			grid.rowLocations.square.right.push(rowLocation + scrollCellSize/2);
+			grid.rowLocations.square.left.push(rowLocation + scrollCellSize/2);
+			grid.rowLocations.triangle.down.push(rowLocation + triangleHeight/3);
+			grid.rowLocations.triangle.right.push(null);
+			grid.rowLocations.triangle.up.push(rowLocation + tilePixels/2 + 2*triangleHeight/3);
+			grid.rowLocations.triangle.left.push(null);
 		} else {
-			this.rowLocations.square.right.push(null);
-			this.rowLocations.square.left.push(null);
-			this.rowLocations.triangle.up.push(null);
-			this.rowLocations.triangle.right.push(rowLocation + scrollCellSize/2);
-			this.rowLocations.triangle.down.push(null);
-			this.rowLocations.triangle.left.push(rowLocation + scrollCellSize/2);
+			grid.rowLocations.square.right.push(null);
+			grid.rowLocations.square.left.push(null);
+			grid.rowLocations.triangle.up.push(null);
+			grid.rowLocations.triangle.right.push(rowLocation + scrollCellSize/2);
+			grid.rowLocations.triangle.down.push(null);
+			grid.rowLocations.triangle.left.push(rowLocation + scrollCellSize/2);
 		}
 	}
 }
 
-SnubSquareGrid.prototype.resizeShapes = function () {
-	this.triangle.resize();
-	this.square.resize();
-}
-
-SnubSquareGrid.prototype.shape = function (x,y) {
+SnubSquare.prototype.shape = function (shapes, x, y) {
 	if (modulo(x + y,2) == 0) {
-		return this.square;
+		return shapes.square;
 	} else {
-		return this.triangle;
+		return shapes.triangle;
 	}
 }
 
-SnubSquareGrid.prototype.orientation = function (x,y) {
-
+SnubSquare.prototype.orientation = function (x, y) {
 	switch (modulo(x + y,4)) {
 		case 0: return "left";
 		case 2: return "right";
@@ -160,133 +142,60 @@ SnubSquareGrid.prototype.orientation = function (x,y) {
 // odd-numbered columns only contain even rows (and vice-versa obv)
 // left&right triangles are in the odd rows
 // up&down triangles are in the odd columns
-SnubSquareGrid.prototype.randomTile = function () {
+SnubSquare.prototype.random_tile = function (maxX, maxY) {
 	while (true) {
-		var x = Math.floor(Math.random()*(this.grid.xMax + 1));
-		var y = Math.floor(Math.random()*(this.grid.yMax + 1));
+		var x = Math.floor(Math.random()*(maxX + 1));
+		var y = Math.floor(Math.random()*(maxY + 1));
 		if (modulo(x,2) == 1 && modulo(y,2) == 1) continue;
 		break;
 	}
 	return [x,y];
 }
 
-SnubSquareGrid.prototype.neighbour = function (x,y,direction) {
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: opposite_direction(direction)
+SnubSquare.prototype.neighbour = function (x, y, direction, gridSize) {
+	switch (direction) {
+		case "n":           y -= 2; break;
+		case "nne":         y--;    break;
+		case "nee": x++;            break;
+		case "e":   x += 2;         break;
+		case "see": x++;            break;
+		case "sse":         y++;    break;
+		case "s":           y += 2; break;
+		case "ssw":         y++;    break;
+		case "sww": x--;            break;
+		case "w":   x -= 2;         break;
+		case "nww": x--;            break;
+		case "nnw":         y--;    break;
 	}
 
-	var shape = this.shape(x,y).name;
-	var orientation = this.orientation(x,y);
-
-	switch (shape+"-"+orientation+"-"+direction) {
-		case "square-left-nnw":
-		case "square-right-nne":
-			neighbour.y --;
-			if (neighbour.y < 0) neighbour.y = yMax;
-			break;
-		case "square-left-nee":
-		case "square-right-see":
-			neighbour.x ++;
-			break;
-		case "square-left-sse":
-		case "square-right-ssw":
-			neighbour.y ++;
-			break;
-		case "square-left-sww":
-		case "square-right-nww":
-			neighbour.x --;
-			if (neighbour.x < 0) neighbour.x = xMax;
-			break;
-		case "triangle-left-e":
-			neighbour.x += 2;
-			if (neighbour.x > xMax) neighbour.x = 0;
-			break;
-		case "triangle-right-w":
-			neighbour.x -= 2;
-			if (neighbour.x < 0) neighbour.x = xMax - 1;
-			break;
-		case "triangle-right-nne":
-		case "triangle-left-nnw":
-			neighbour.y --;
-			break;
-		case "triangle-right-sse":
-		case "triangle-left-ssw":
-			neighbour.y ++;
-			if (neighbour.y > yMax) neighbour.y = 0;
-			break;
-		case "triangle-down-n":
-			neighbour.y -= 2;
-			if (neighbour.y < 0) neighbour.y = yMax - 1;
-			break;
-		case "triangle-up-s":
-			neighbour.y += 2;
-			if (neighbour.y > yMax) neighbour.y = 0;
-			break;
-		case "triangle-down-see":
-		case "triangle-up-nee":
-			neighbour.x ++;
-			if (neighbour.x > xMax) neighbour.x = 0;
-			break;
-		case "triangle-down-sww":
-		case "triangle-up-nww":
-			neighbour.x --;
-			break;
-	}
-
-	return neighbour;
+	return [x,y];
 }
 
-SnubSquareGrid.prototype.eachTile = function (tileFunction) {
-	for (var x = 0; x <= this.grid.xMax; x++) {
+SnubSquare.prototype.each_tile = function (maxX, maxY, tileFunction) {
+	for (var x = 0; x <= maxX; x++) {
 		var yIncr = modulo(x,2) == 0 ? 1 : 2;
-		for (var y = 0; y <= this.grid.yMax; y += yIncr) {
+		for (var y = 0; y <= maxY; y += yIncr) {
 			tileFunction(x,y);
 		}
 	}
 }
 
 // return the x y pixel at the centre of the tile
-SnubSquareGrid.prototype.tileLocation = function (x,y,rotation) {
-
-	var shape = this.shape(x,y);
+SnubSquare.prototype.tile_location = function (grid, x, y) {
+	var shape = this.shape(grid.shapes,x,y);
 	var orientation = this.orientation(x,y);
 
 	// get pixels based on row and column
-	var xPixel = this.columnLocations[shape.name][orientation][x];
-	var yPixel = this.rowLocations[shape.name][orientation][y];
-
-	//console.log("location of",shape.name,orientation,x,y,"is",xPixel,yPixel);
+	var xPixel = grid.columnLocations[shape.name][orientation][x];
+	var yPixel = grid.rowLocations[shape.name][orientation][y];
 
 	return [xPixel,yPixel];
 }
 
 // return the x,y of the tile that the pixel position is inside of
-SnubSquareGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var gridSize = this.grid.size;
-	var tileSize = this.grid.tilePixels;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
-	var x;
-	var y;
-
-	// check we are inside the grid
-	if (xPixel < 0)                   return []; // beyond the left edge
-	if (xPixel > xPixels)             return []; // beyond the right edge
-	if (yPixel < 0)                   return []; // beyond the top edge
-	if (yPixel > yPixels)             return []; // beyond the bottom edge
-
-	var scrollCellSize = (Q3 + 1)*tileSize/2;
-	var triangleHeight = Q3*tileSize/2;
+SnubSquare.prototype.tile_at = function (grid, xPixel, yPixel) {
+	var scrollCellSize = (Q3 + 1)*grid.tilePixels/2;
+	var triangleHeight = Q3*grid.tilePixels/2;
 
 	// which (scroll) row, column the click was inside
 	var column = Math.floor(xPixel/scrollCellSize);
@@ -301,11 +210,11 @@ SnubSquareGrid.prototype.tileAt = function (xPixel,yPixel) {
 	yPixel -= rowPixel;
 
 	// apply scroll to row & column
-	column = modulo(column - xScroll, 2*gridSize);
-	row = modulo(row - yScroll, 2*gridSize);
+	column = modulo(column - grid.xScroll, 2*grid.size);
+	row = modulo(row - grid.yScroll, 2*grid.size);
 
-	x = column*2;
-	y = row*2;
+	var x = column*2;
+	var y = row*2;
 
 	// the square cell defined by the row and column
 	// contains a square tile, tilted either to the left or right
@@ -347,26 +256,17 @@ SnubSquareGrid.prototype.tileAt = function (xPixel,yPixel) {
 		}
 	}
 
-	//console.log("tile is",x,y);
-	x = modulo(x,(xMax + 1));
-	y = modulo(y,(yMax + 1));
-
 	return [x,y];
 }
 
-SnubSquareGrid.prototype.updateScroll = function (direction) {
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
+// return the horizontal offset in pixels
+// based on the current scroll position
+SnubSquare.prototype.x_scroll_pixel = function (xScroll, tilePixels) {
+	return xScroll*(Q3 + 1)*tilePixels/2;
+}
 
-	xScroll = modulo(xScroll,this.grid.xMax + 1);
-	yScroll = modulo(yScroll,this.grid.yMax + 1);
-
-	var scrollCellSize = (Q3 + 1)*this.grid.tilePixels/2;
-	this.grid.xScrollPixel = xScroll*scrollCellSize;
-	this.grid.yScrollPixel = yScroll*scrollCellSize;
-
-	// console.log("scroll @",xScroll,yScroll,"pixel @ ",this.grid.xScrollPixel,this.grid.yScrollPixel);
-
-	this.grid.xScroll = xScroll;
-	this.grid.yScroll = yScroll;
+// return the vertical offset in pixels
+// based on the current scroll position
+SnubSquare.prototype.y_scroll_pixel = function (yScroll, tilePixels) {
+	return yScroll*(Q3 + 1)*tilePixels/2;
 }

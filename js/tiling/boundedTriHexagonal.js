@@ -54,43 +54,27 @@ BoundedTriHexagonal.prototype.closest_size = function (tiles) {
 	return Math.round((Math.sqrt(4*(tiles - 1)/9 + 1) - 1)/2);
 }
 
-BoundedTriHexagonal.prototype.newGrid = function (grid) {
-	return new BoundedTriHexagonalGrid(grid,this);
+// create sized shapes for a new grid
+BoundedTriHexagonal.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.triangle = this.triangle.newTriangle(grid);
+	shapes.hexagon = this.hexagon.newHexagon(grid);
+	return shapes;
 }
 
-
-function BoundedTriHexagonalGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
-	// ensure continuous x & y are set to false
-	grid.xContinuous = false;
-	grid.yContinuous = false;
-
+BoundedTriHexagonal.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 4*grid.size;
 	grid.yMax = 4*grid.size;
-
-	this.calculateDimensions();
-	this.triangle = this.tiling.triangle.newTriangle(grid);
-	this.hexagon = this.tiling.hexagon.newHexagon(grid);
-	this.shapes = [this.triangle,this.hexagon];
-}
-
-BoundedTriHexagonalGrid.prototype = new TilingGrid();
-
-BoundedTriHexagonalGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 		tilePixels = 2*grid.yPixels/(Q3*2*(2*grid.size + 1));
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 		tilePixels = grid.xPixels/(2*(2*grid.size + 1));
 	}
 	grid.tilePixels = tilePixels;
@@ -100,37 +84,31 @@ BoundedTriHexagonalGrid.prototype.calculateDimensions = function () {
 	grid.scrollWidth = grid.xPixels;
 	grid.scrollHeight = grid.yPixels;
 
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	for (var column = 0; column <= grid.xMax; column++) {
-		this.columnLocations.push((column + 1)*tilePixels);
+		grid.columnLocations.push((column + 1)*tilePixels);
 	}
 
-	this.rowLocations = {hexagon: {flat: []}, triangle: {down: [], up: []}};
+	grid.rowLocations = {hexagon: {flat: []}, triangle: {down: [], up: []}};
 	for (var row = 0; row <= grid.yMax; row++) {
 		var rowLocation = Math.floor(row*Q3*tilePixels);
 
-		this.rowLocations.hexagon.flat.push(rowLocation + Q3*tilePixels/2);
-		this.rowLocations.triangle.down.push(rowLocation + tilePixels/(2*Q3));
-		this.rowLocations.triangle.up.push(rowLocation + 5*tilePixels/(2*Q3));
+		grid.rowLocations.hexagon.flat.push(rowLocation + Q3*tilePixels/2);
+		grid.rowLocations.triangle.down.push(rowLocation + tilePixels/(2*Q3));
+		grid.rowLocations.triangle.up.push(rowLocation + 5*tilePixels/(2*Q3));
 	}
-
 }
 
-BoundedTriHexagonalGrid.prototype.resizeShapes = function () {
-	this.triangle.resize();
-	this.hexagon.resize();
-}
-
-BoundedTriHexagonalGrid.prototype.shape = function (x,y) {
+BoundedTriHexagonal.prototype.shape = function (shapes, x, y) {
 	if (modulo(x - y,3) == 0) {
-		return this.hexagon;
+		return shapes.hexagon;
 	} else {
-		return this.triangle;
+		return shapes.triangle;
 	}
 }
 
 // all hexagons are flat
-BoundedTriHexagonalGrid.prototype.orientation = function (x,y) {
+BoundedTriHexagonal.prototype.orientation = function (x, y) {
 	switch (modulo(x - y,3)) {
 		case 0: return "flat";
 		case 1: return "up";
@@ -138,72 +116,60 @@ BoundedTriHexagonalGrid.prototype.orientation = function (x,y) {
 	}
 }
 
-BoundedTriHexagonalGrid.prototype.randomTile = function () {
-	var size = this.grid.size;
-
-	// var tileNo = Math.floor(Math.random()*this.tiling.tiles(this.size))
-
+BoundedTriHexagonal.prototype.random_tile = function (maxX, maxY) {
+	var size = maxX/4;
 
 	while (true) {
 		// will never choose a tile with a negative coord, which is possible on this tiling
-		var x = Math.floor(Math.random()*(this.grid.xMax + 1));
-		var y = Math.floor(Math.random()*(this.grid.yMax + 1));
+		var x = Math.floor(Math.random()*(maxX + 1));
+		var y = Math.floor(Math.random()*(maxY + 1));
 		if (x + y/2 + 1 <= 3*size/2 || x + y/2 - 1 >= 9*size/2) continue;
 		if (x/2 + y + 1 <= 3*size/2 || x/2 + y - 1 >= 9*size/2) continue;
 		if (x - y - 1 > 3*size || y - x - 1 > 3*size) continue;
 		break;
 	}
-	//console.log("random tile",x,y);
+
 	return [x,y];
 }
 
-BoundedTriHexagonalGrid.prototype.neighbour = function (x,y,direction) {
-	//console.log("neighbour of",x,y,direction);
-	var size = this.grid.size;
-
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: opposite_direction(direction)
-	}
-
+BoundedTriHexagonal.prototype.neighbour = function (x, y, direction, gridSize) {
+	// check boundary violations - not as simple as checking if e.g x > maxX
 	switch (direction) {
 		case "n":
-			neighbour.y--;
-			if (neighbour.x/2 + neighbour.y + 1 <= 3*size/2) return null;
+			y--;
+			if (x/2 + y + 1 <= 3*gridSize/2) return null;
 			break;
 		case "nee":
-			neighbour.x++;
-			neighbour.y--;
-			if (neighbour.x - neighbour.y - 1 > 3*size) return null;
+			x++;
+			y--;
+			if (x - y - 1 > 3*gridSize) return null;
 			break;
 		case "see": 
-			neighbour.x++;
-			if (neighbour.x + neighbour.y/2 - 1 >= 9*size/2) return null;
+			x++;
+			if (x + y/2 - 1 >= 9*gridSize/2) return null;
 			break;
 		case "s":
-			neighbour.y++;
-			if (neighbour.x/2 + neighbour.y - 1 >= 9*size/2) return null;
+			y++;
+			if (x/2 + y - 1 >= 9*gridSize/2) return null;
 			break;
 		case "sww":
-			neighbour.x--;
-			neighbour.y++;
-			if (neighbour.y - neighbour.x - 1 > 3*size) return null;
+			x--;
+			y++;
+			if (y - x - 1 > 3*gridSize) return null;
 			break;
 		case "nww":
-			neighbour.x--;
-			if (neighbour.x + neighbour.y/2 + 1 <= 3*size/2) return null;
+			x--;
+			if (x + y/2 + 1 <= 3*gridSize/2) return null;
 			break;
 	}
 
-	//console.log("neighbour is",neighbour.x,neighbour.y,neighbour.direction);
-	return neighbour;
+	return [x,y];
 }
 
-BoundedTriHexagonalGrid.prototype.eachTile = function (tileFunction) {
-	var size = this.grid.size;
-	for (var x = 0; x <= this.grid.xMax; x ++) {
-		for (var y = 0; y <= this.grid.yMax; y ++) {
+BoundedTriHexagonal.prototype.each_tile = function (maxX, maxY, tileFunction) {
+	var size = maxX/4;
+	for (var x = 0; x <= maxX; x ++) {
+		for (var y = 0; y <= maxY; y ++) {
 			if (x + y/2 + 1 <= 3*size/2 || x + y/2 - 1 >= 9*size/2) continue;
 			if (x/2 + y + 1 <= 3*size/2 || x/2 + y - 1 >= 9*size/2) continue;
 			if (x - y - 1 > 3*size || y - x - 1 > 3*size) continue;
@@ -212,92 +178,75 @@ BoundedTriHexagonalGrid.prototype.eachTile = function (tileFunction) {
 	}
 }
 
-BoundedTriHexagonalGrid.prototype.tileLocation = function (x,y,rotation) {
-	var shape = this.shape(x,y);
+BoundedTriHexagonal.prototype.tile_location = function (grid, x, y) {
+	var shape = this.shape(grid.shapes,x,y);
 	var orientation = this.orientation(x,y);
 
 	var column = x;
-	var row = Math.floor((x + 2*y + 1)/3) - this.grid.size;
+	var row = Math.floor((x + 2*y + 1)/3) - grid.size;
 
 	// get pixels based on row and column
-	var xPixel = this.columnLocations[column];
-	var yPixel = this.rowLocations[shape.name][orientation][row];
+	var xPixel = grid.columnLocations[column];
+	var yPixel = grid.rowLocations[shape.name][orientation][row];
 
 	return [xPixel,yPixel];
 }
 
 // return the x,y of the tile that the pixel position is inside of
-BoundedTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var gridSize = this.grid.size;
-	var tileSize = this.grid.tilePixels;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
-	var x;
-	var y;
-
-	// check we are inside the grid
-	if (xPixel + yPixel/Q3 < xPixels/4)                         return []; // beyond the upper left edge
-	if (xPixel + (yPixels - yPixel)/Q3 < xPixels/4)             return []; // beyond the lower left edge
-	if ((xPixels - xPixel) + yPixel/Q3 < xPixels/4)             return []; // beyond the upper right edge
-	if ((xPixels - xPixel) + (yPixels - yPixel)/Q3 < xPixels/4) return []; // beyond the lower right edge
-	if (yPixel < 0)                                             return []; // beyond the bottom edge
-	if (yPixel > yPixels)                                       return []; // beyond the bottom edge
+BoundedTriHexagonal.prototype.tile_at = function (grid, xPixel, yPixel) {
+	// check we are inside the (hexagonal-shaped) grid
+	if (xPixel + yPixel/Q3 < grid.xPixels/4)                                   return []; // beyond the upper left edge
+	if (xPixel + (grid.yPixels - yPixel)/Q3 < grid.xPixels/4)                  return []; // beyond the lower left edge
+	if ((grid.xPixels - xPixel) + yPixel/Q3 < grid.xPixels/4)                  return []; // beyond the upper right edge
+	if ((grid.xPixels - xPixel) + (grid.yPixels - yPixel)/Q3 < grid.xPixels/4) return []; // beyond the lower right edge
 
 	// determine the x,y,z of the triangle
 	// same as for triangular
 	// in this case, each triangle either corresponds to one triangle tile,
 	//    or one-sixth of a hexagon tile
-	var xTriangle = Math.floor((xPixel + yPixel/Q3 - xPixels/4)/tileSize);
-	var yTriangle = Math.floor(2*yPixel/(Q3*tileSize));
-	var zTriangle = Math.floor(((xPixels - xPixel) + yPixel/Q3 - xPixels/4)/tileSize);
-	// console.log("triangle @",xTriangle,yTriangle,zTriangle);
+	var xTriangle = Math.floor((xPixel + yPixel/Q3 - grid.xPixels/4)/grid.tilePixels);
+	var yTriangle = Math.floor(2*yPixel/(Q3*grid.tilePixels));
+	var zTriangle = Math.floor(((grid.xPixels - xPixel) + yPixel/Q3 - grid.xPixels/4)/grid.tilePixels);
 
+	var x;
+	var y;
 	if (modulo(xTriangle,2) == 0 && modulo(yTriangle,2) == 1 && modulo(zTriangle,2) == 0) {
 		// up triangle
 		y = Math.floor((yTriangle + zTriangle)/2);
-		x = (xTriangle - zTriangle)/2 + 2*gridSize;
-		// console.log("up triangle @",x,y);
+		x = (xTriangle - zTriangle)/2 + 2*grid.size;
+
 	} else if (modulo(xTriangle,2) == 1 && modulo(yTriangle,2) == 0 && modulo(zTriangle,2) == 1) {
 		// down triangle
 		y = Math.floor((yTriangle + zTriangle)/2);
-		x = (xTriangle - zTriangle)/2 + 2*gridSize;
-		// console.log("down triangle @",x,y);
+		x = (xTriangle - zTriangle)/2 + 2*grid.size;
+
 	} else {
 		// hexagon
 		y = Math.floor((yTriangle + zTriangle)/2);
 		switch (modulo(xTriangle,4)) {
-			case 0: case 1: if (modulo(y,2) != modulo(gridSize,2)) y--; break;
-			case 2: case 3: if (modulo(y,2) == modulo(gridSize,2)) y--; break;
+			case 0: case 1: if (modulo(y,2) != modulo(grid.size,2)) y--; break;
+			case 2: case 3: if (modulo(y,2) == modulo(grid.size,2)) y--; break;
 		}
 
-		x = Math.floor((xTriangle - zTriangle)/2 + 2*gridSize);
+		x = Math.floor((xTriangle - zTriangle)/2 + 2*grid.size);
 		switch (modulo(yTriangle,4)) {
-			case 0: case 1: if (modulo(x,2) != modulo(gridSize,2)) x++; break;
-			case 2: case 3: if (modulo(x,2) == modulo(gridSize,2)) x++; break;
+			case 0: case 1: if (modulo(x,2) != modulo(grid.size,2)) x++; break;
+			case 2: case 3: if (modulo(x,2) == modulo(grid.size,2)) x++; break;
 		}
-		// console.log("hexagon @",x,y);
 	}
-
-	x = modulo(x,(xMax + 1));
-	y = modulo(y,(yMax + 1));
-	// console.log("tile @",x,y);
-
-	// fill 
 
 	return [x,y];
 }
 
-BoundedTriHexagonalGrid.prototype.updateScroll = function () {}
+// return the horizontal offset in pixels
+// based on the current scroll position
+BoundedTriHexagonal.prototype.x_scroll_pixel = function (xScroll,tilePixels) {}
 
-BoundedTriHexagonalGrid.prototype.clipScreen = function () {
-	var grid = this.grid;
-	var screen = this.grid.screen;
+// return the vertical offset in pixels
+// based on the current scroll position
+BoundedTriHexagonal.prototype.y_scroll_pixel = function (yScroll,tilePixels) {}
 
+BoundedTriHexagonal.prototype.clip_perimeter = function (grid) {
 	// clear the outer area
 	var x = grid.x;
 	var y = grid.y;
@@ -305,20 +254,20 @@ BoundedTriHexagonalGrid.prototype.clipScreen = function () {
 	var height = grid.yPixels;
 
 	// clip the area
-	screen.context.save();
-	screen.context.beginPath();
-	screen.context.moveTo(x + width/4,y);
-	screen.context.lineTo(x + 3*width/4,y);
-	screen.context.lineTo(x + width,y + height/2);
-	screen.context.lineTo(x + 3*width/4,y + height);
-	screen.context.lineTo(x + width/4,y + height);
-	screen.context.lineTo(x,y + height/2);
-	screen.context.lineTo(x + width/4,y);
-	screen.context.clip();
+	grid.screen.context.save();
+	grid.screen.context.beginPath();
+	grid.screen.context.moveTo(x + width/4,y);
+	grid.screen.context.lineTo(x + 3*width/4,y);
+	grid.screen.context.lineTo(x + width,y + height/2);
+	grid.screen.context.lineTo(x + 3*width/4,y + height);
+	grid.screen.context.lineTo(x + width/4,y + height);
+	grid.screen.context.lineTo(x,y + height/2);
+	grid.screen.context.lineTo(x + width/4,y);
+	grid.screen.context.clip();
 
-	screen.context.clearRect(x, y, width, height);
+	grid.screen.context.clearRect(x, y, width, height);
 
 	// fill with the background colour
-	screen.context.fillStyle = screen.colour;
-	screen.context.fillRect(x,y,width,height);
+	grid.screen.context.fillStyle = grid.screen.colour;
+	grid.screen.context.fillRect(x,y,width,height);
 }

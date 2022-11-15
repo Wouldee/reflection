@@ -1,10 +1,4 @@
 
-// Merge Grid & TilingGrid into a single class~~~
-// Remove the reference to the game - grid should do the shuffle~~~
-// Game should pass in a callback for when the grid is drawn~~~
-// Also a callback for when a node is lit~~~
-// Maybe game passes in a callback "object", that has certain functions~~~
-
 // Create a new grid
 // game = the game object (game.js)
 // screen = screen object (screen.js)
@@ -16,6 +10,7 @@
 function Grid (game,screen,tiling,size,innerDimensions,outerDimensions,xContinuous,yContinuous) {
 	this.game = game;
 	this.screen = screen;
+	this.tiling = tiling;
 	this.size = size;
 	this.x = innerDimensions.x1;
 	this.y = innerDimensions.y1;
@@ -25,6 +20,10 @@ function Grid (game,screen,tiling,size,innerDimensions,outerDimensions,xContinuo
 	this.xContinuous = xContinuous;
 	this.yContinuous = yContinuous;
 
+	// tiling-specific variables
+	this.columnLocations = [];
+	this.rowLocations = [];
+
 	// offsets for drawing on the gridCanvas
 	this.xOffset = this.x - outerDimensions.x1;
 	this.yOffset = this.y - outerDimensions.y1;
@@ -33,37 +32,29 @@ function Grid (game,screen,tiling,size,innerDimensions,outerDimensions,xContinuo
 	this.yScrollPeriod = 1;
 	this.xScrollOffset = 0;
 
-	// this.loadingBar = this.screen.progressBar(this.x,0.5,this.xPixels,0.025,'#00ff00',5,3);
-	// this.loadingBar.update(1);
-	// this.loadingBar.reset();
-
-	this.resetProperties();
-	this.tiling = tiling.newGrid(this);
-	this.resetTiles();
+	this.reset_properties();
+	tiling.calculate_dimensions(this);
+	this.shapes = tiling.shapes(this);
+	this.reset_tiles();
 
 	// clear the outer area
-	this.tiling.clearScreen();
+	this.clear_screen();
 
-	//this.screen.addListener(innerDimensions.x1,innerDimensions.y1,innerDimensions.x2,innerDimensions.y2,this);
-
-	// console.log("generated grid: pixels",this.xPixels,this.yPixels,this.tilePixels,"offset",this.x,this.y,"continuous",this.xContinuous,this.yContinuous,"max",this.xMax,this.yMax);
-	// console.log(this);
+	//~~~
+	console.log("grid: ",this);
 }
 
 // called when game is restarted or new game started while previous game still exists
 Grid.prototype.clear = function () {
 	delete this.canvas;
-	this.resetProperties();
-	this.resetTiles();
+	this.reset_properties();
+	this.reset_tiles();
 
 	// clear the outer area
-	this.tiling.clearScreen();
-
-	// this.loadingBar.coordinates(this.x,0.5,this.xPixels,0.05)
-	// this.loadingBar.reset();
+	this.clear_screen();
 }
 
-Grid.prototype.resetProperties = function () {
+Grid.prototype.reset_properties = function () {
 	this.tiles = [];
 	this.sources = [];
 	this.connectors = [];
@@ -74,8 +65,6 @@ Grid.prototype.resetProperties = function () {
 	this.yScroll = 0;
 	this.xScrollPixel = 0;
 	this.yScrollPixel = 0;
-	//this.scrollWidth = this.xPixels;
-	//this.scrollHeight = this.yPixels;
 	this.drawn = false;
 	this.ready = false;
 	this.tileImageCount = 0;
@@ -85,17 +74,19 @@ Grid.prototype.resetProperties = function () {
 	this.unfinishedConnectors = 0;
 }
 
-Grid.prototype.resetTiles = function () {
-	var grid  = this;
-
+// initialise the tiles array
+// create the grid canvas
+Grid.prototype.reset_tiles = function () {
 	// initialise each row
 	for (var x = 0; x <= this.xMax; x++) this.tiles[x] = [];
 
 	// function to initialise each tile per row
-	var resetTile = function (x,y) {
+	var grid  = this;
+	var reset_tile = function (x,y) {
 		grid.tiles[x][y] = null;
 	}
-	this.tiling.eachTile(resetTile);
+	this.tiling.each_tile(this.xMax, this.yMax, reset_tile);
+	console.log("initialised tiles:",this.tiles);
 
 	// create a canvas to draw everything on
 	// whenever anything changes - e.g a tile is rotated
@@ -109,6 +100,7 @@ Grid.prototype.resetTiles = function () {
 	this.imageLoaded = false;
 }
 
+// resize during a game does not work~~
 Grid.prototype.resize = function (innerDimensions,outerDimensions) {
 	this.x = innerDimensions.x1;
 	this.y = innerDimensions.y1;
@@ -125,18 +117,18 @@ Grid.prototype.resize = function (innerDimensions,outerDimensions) {
 	this.tileImageCount = 0;
 	this.scaledImageLoadedCount = 0;
 	this.tileImageLoadProgress = 0;
-	// this.loadingBar.reset();
-	// this.progressLoadingBar();
 
 	// update/reset tiling
-	this.tiling.resize();
-	//this.tiling.calculateDimensions();
+	this.tiling.calculate_dimensions(this);
+	for (name in this.shapes) {
+		shapes[name].resize();
+	}
 
 	// update scroll
-	this.tiling.updateScroll();
+	this.update_scroll();
 
 	// redraw the canvas image at the new size
-	this.drawScreen();
+	this.draw_screen();
 
 	// resize the canvas image of the grid contents
 	var canvas = document.createElement("canvas");
@@ -147,15 +139,10 @@ Grid.prototype.resize = function (innerDimensions,outerDimensions) {
 	this.context = canvas.getContext("2d");
 	this.image = null;
 	this.imageLoaded = false;
-
-	// update the screen
-	//this.updateScreen();
 }
 
 // update the screen with the current image of the grid
-Grid.prototype.updateScreen = function () {
-	var grid = this;
-
+Grid.prototype.update_screen = function () {
 	// console.log("update grid screen");
 
 	// convert the grid canvas to an image and draw it
@@ -165,14 +152,15 @@ Grid.prototype.updateScreen = function () {
 
 	var loadCounter = this.loadCounter;
 	// the image has no content yet, we have to arrange for it to be drawn when it is loaded
+	var grid = this;
 	var onLoad = function () {
 		grid.imageLoaded = true;
-		grid.drawScreen(loadCounter);
+		grid.draw_screen(loadCounter);
 	}
 	this.image.addEventListener("load",onLoad);
 }
 
-Grid.prototype.drawScreen = function (loadCounter) {
+Grid.prototype.draw_screen = function (loadCounter) {
 	//console.log("drawing grid image; scroll:",this.xScroll,this.yScroll,"scroll pixel:",this.xScrollPixel,this.yScrollPixel);
 
 	if (!this.imageLoaded) return;
@@ -181,7 +169,7 @@ Grid.prototype.drawScreen = function (loadCounter) {
 	// console.log("draw grid screen");
 
 	// clear the outer area
-	this.tiling.clipScreen();
+	this.clip_screen();
 
 	// the grid image will often not occupy the entire area
 	// this happens when the grid is continuous
@@ -228,96 +216,176 @@ Grid.prototype.drawScreen = function (loadCounter) {
 	}
 
 	// reverse the clip
-	this.tiling.unclipScreen();
+	this.unclip_screen();
 
 	// inform the game that the grid has been drawn
 	this.game.gridDrawn();
 }
 
-Grid.prototype.rotateAt = function (xPixel,yPixel,direction) {
+// create a tile at grid location x,y
+// merged with tiling.newTile()
+Grid.prototype.create_tile = function (x,y) {
+	var tile = new Tile(this,x,y);
 
-	//game_log("grid",1,"grid",mouseButton,"clicked @",xPixel - this.x,yPixel - this.y);
+	tile.orientation = this.tiling.orientation(tile.x,tile.y);
+	var shape = this.tiling.shape(this.shapes,tile.x,tile.y);
+	shape.newTile(tile);
 
-	var location = this.tiling.tileAt(xPixel - this.x,yPixel - this.y);
-	var x = location[0];
-	var y = location[1];
-	var tile = this.tiles[x][y];
-	console.log("tile clicked is ",tile);
-	// console.log("tile has "+tile.linkCount+" links");
-	// console.log("paths in & out",tile.paths_in(),tile.paths_out());
-	if (!ROTATE) return;
-
-	var affectedTiles = {};
-	var rotation = 1
-	if (direction == "anticlockwise") rotation = -1;
-
-	var rotatedBy = this.rotateTile(x,y,rotation,affectedTiles);
-
-	// console.log("Rotated tile ",tile);
-
-	for (var tileX in affectedTiles) {
-		for (var tileY in affectedTiles[tileX]) {
-			this.drawTile(parseInt(tileX),parseInt(tileY));
-		}
-	}
-
-	this.updateScreen();
-
-	return (rotatedBy != 0);
+	this.tiles[x][y] = tile;
+	return tile;
 }
 
-Grid.prototype.startDrawing = function () {
+// return the tile at grid location x,y
+Grid.prototype.tile = function (x,y) {
+	return this.tiles[x][y];
+}
+
+// return the neighbour of the tile at x,y in the given direction
+// neighbour is an object, with x, y and directio values
+Grid.prototype.neighbour = function (x,y,direction) {
+	var neighbour = {};
+
+	// calculate neighbour coord based on tiling, direction
+	var coord = this.tiling.neighbour(x,y,direction,this.size);
+	if (coord == null) return null;
+
+	neighbour.x = coord[0];
+	neighbour.y = coord[1];
+	neighbour.direction = opposite_direction(direction);
+	
+	// if x or y is not continuous
+	// check that x & y are within the limits
+	if (!this.xContinuous && (neighbour.x < 0 || neighbour.x > this.xMax)) return null;
+	if (!this.yContinuous && (neighbour.y < 0 || neighbour.y > this.yMax)) return null;
+
+	// if continuous, then wrap coords
+	neighbour.x = modulo(neighbour.x,this.xMax + 1);
+	neighbour.y = modulo(neighbour.y,this.yMax + 1);
+
+	return neighbour;
+}
+
+// return the x,y of a randomly selected tile location
+// tile may not exist yet
+Grid.prototype.random_tile = function () {
+	return this.tiling.random_tile(this.xMax,this.yMax);
+}
+
+// return true if a tile has been created at grid location x,y
+Grid.prototype.tile_exists = function (x,y) {
+	// console.log("tile exists? @"+x+","+y);
+	return (this.tiles[x][y] != null);
+}
+
+Grid.prototype.remove_tile = function (x,y) {
+	this.tiles[x][y] = null;
+}
+
+// create a source at grid location x,y
+Grid.prototype.create_source = function (x,y,colour) {
+	var tile = this.create_tile(x,y);
+	tile.source(colour);
+	this.sources.push([x,y]);
+	return tile;
+}
+
+Grid.prototype.connector = function (x,y) {
+	var tile = this.tiles[x][y];
+	tile.connector();
+	this.connectors.push([x,y]);
+	this.unfinishedConnectors++;
+	// console.log("added connector",this.unfinishedConnectors);
+}
+
+Grid.prototype.connector_finished = function () {
+	this.unfinishedConnectors--;
+	// console.log("finished connector",this.unfinishedConnectors);
+	if (this.unfinishedConnectors == 0) this.game.tilesReady();
+}
+
+Grid.prototype.node = function (x,y) {
+	var tile = this.tiles[x][y];
+	tile.node();
+	this.nodes.push([x,y]);
+	this.lit++;
+}
+
+Grid.prototype.fill_in_the_blanks = function () {
+	var grid = this;
+
+	var tileFunction = function (x,y) {
+		if (!grid.tile_exists(x,y)) grid.blank_tile(x,y);
+	}
+
+	this.tiling.each_tile(this.xMax, this.yMax, tileFunction);
+}
+
+Grid.prototype.blank_tile = function (x,y) {
+	console.log("blank tile @",x,y);
+	var tile = this.create_tile(x,y);
+	tile.shape.blank_tile(tile);
+}
+
+Grid.prototype.light_node = function () {
+	this.lit++;
+}
+
+Grid.prototype.unlight_node = function () {
+	this.lit--;
+}
+
+Grid.prototype.new_path = function (path) {
+	this.paths.push(path);
+}
+
+Grid.prototype.clear_screen = function () {
+	this.clip_screen();
+	this.unclip_screen();
+}
+
+Grid.prototype.clip_screen = function () {
+	var outer = this.outerDimensions;
+	var screen = this.screen;
+/* 
+	// clear the outer area
+	var x = outer.x1;
+	var y = outer.y1;
+	var width = outer.x2 - outer.x1;
+	var height = outer.y2 - outer.y1;
+ */
+	// clip the area covered by the tiling - usually rectangular
+	// but bounded triangular & bounded trihexagonal are different
+	this.tiling.clip_perimeter(this);
+
+	// screen.context.clearRect(x, y, width, height);
+
+	// fill with the background colour
+	// screen.context.fillStyle = screen.colour;
+	// screen.context.fillRect(x,y,width,height);
+}
+
+Grid.prototype.unclip_screen = function () {
+	this.screen.context.restore();
+}
+
+Grid.prototype.start_drawing = function () {
 	this.context.save();
 }
 
-Grid.prototype.finishDrawing = function () {
+Grid.prototype.finish_drawing = function () {
 	this.context.restore();
 }
 
-Grid.prototype.drawAt = function (xPixel,yPixel) {
+Grid.prototype.draw_at = function (xPixel,yPixel) {
 	this.context.translate(xPixel,yPixel);
 }
 
-Grid.prototype.rotateBy = function (degrees) {
+Grid.prototype.rotate_by = function (degrees) {
 	this.context.rotate(degrees*RAD);
 }
 
 Grid.prototype.reverse = function (degrees) {
 	this.context.scale(-1,1);
-}
-
-Grid.prototype.tileImageCreated = function () {
-	// this.progressLoadingBar();
-	this.tileImageCount++;
-}
-
-Grid.prototype.tileImageLoading = function (ratio) {
-	this.tileImageLoadProgress += ratio;
-	// this.loadingBar.update(100*this.tileImageLoadProgress/this.tileImageCount);
-}
-
-Grid.prototype.tileImageLoaded = function () {
-	this.scaledImageLoadedCount++;
-
-	if (this.scaledImageLoadedCount == this.tileImageCount) {
-		if (!this.tiling.imagesLoaded()) return;
-		// console.log("all images loaded");
-		this.draw();
-	}
-}
-
-Grid.prototype.progressLoadingBar = function () {
-	if (this.scaledImageLoadedCount == this.tileImageCount) return;
-	if (this.progressLoadingSchedule != undefined) 	clearInterval(this.progressLoadingSchedule);
-
-	// console.log("loading bar updated @",Date.now()/1000);
-	// update the progress bar
-	// this.loadingBar.update(this.loadingBar.progress + 0.5);
-
-	// schedule another update of the loading bar in another 100 milliseconds
-	var grid = this;
-	// var update_load = function() { grid.progressLoadingBar(); }
-	// this.progressLoadingSchedule = setInterval(update_load,100);
 }
 
 Grid.prototype.drawImage = function (image,x,y) {
@@ -327,7 +395,7 @@ Grid.prototype.drawImage = function (image,x,y) {
 	this.context.drawImage(image,x,y,image.width,image.height);
 }
 
-Grid.prototype.clearRectangle = function (x1,y1,x2,y2) {
+Grid.prototype.clear_rectangle = function (x1,y1,x2,y2) {
 	var width = x2 - x1;
 	var height = y2 - y1;
 	this.context.clearRect(x1, y1, width, height);
@@ -344,8 +412,8 @@ Grid.prototype.clearRectangle = function (x1,y1,x2,y2) {
 	//this.affectedDimensions.y2 = Math.min(y2,this.affectedDimensions.y2)
 }
 
-Grid.prototype.clearPolygon = function () {
-	this.startDrawing();
+Grid.prototype.clear_polygon = function () {
+	this.start_drawing();
 	this.context.beginPath();
 
 	var xPixel = arguments[0];
@@ -366,12 +434,12 @@ Grid.prototype.clearPolygon = function () {
 	}
 
 	this.context.clip();
-	this.clearRectangle(xMin,yMin,xMax,yMax);
-	this.finishDrawing();
+	this.clear_rectangle(xMin,yMin,xMax,yMax);
+	this.finish_drawing();
 }
 
-Grid.prototype.fillPolygon = function () {
-	this.startDrawing();
+Grid.prototype.fill_polygon = function () {
+	this.start_drawing();
 	this.context.beginPath();
 
 	var lastIndex = arguments.length - 1;
@@ -401,11 +469,11 @@ Grid.prototype.fillPolygon = function () {
 
 	this.context.clip();
 	this.context.fillRect(xMin,yMin,xMax-xMin,yMax-yMin);
-	this.finishDrawing();
+	this.finish_drawing();
 }
 
-Grid.prototype.outlinePolygon = function () {
-	this.startDrawing();
+Grid.prototype.outline_polygon = function () {
+	this.start_drawing();
 	this.context.beginPath();
 	this.context.lineWidth = "1";
 
@@ -429,106 +497,35 @@ Grid.prototype.outlinePolygon = function () {
 	this.context.lineTo(arguments[0],arguments[1]);
 
 	this.context.stroke();
-	this.finishDrawing();
+	this.finish_drawing();
 }
 
-// create a tile at grid location x,y
-Grid.prototype.createTile = function (x,y) {
-	var tile = new Tile(this,x,y);
-	this.tiles[x][y] = tile;
-	this.tiling.newTile(tile);
-	return tile;
+Grid.prototype.tile_image_created = function () {
+	// this.progress_loading_bar();
+	this.tileImageCount++;
 }
 
-Grid.prototype.removeTile = function (x,y) {
-	this.tiles[x][y] = null;
+Grid.prototype.tile_image_loading = function (ratio) {
+	this.tileImageLoadProgress += ratio;
+	// this.loadingBar.update(100*this.tileImageLoadProgress/this.tileImageCount);
 }
 
-// create a source at grid location x,y
-Grid.prototype.create_source = function (x,y,colour) {
-	var tile = this.createTile(x,y);
-	tile.source(colour);
-	this.sources.push([x,y]);
-	return tile;
-}
+Grid.prototype.tile_image_loaded = function () {
+	this.scaledImageLoadedCount++;
 
-// return the tile at grid location x,y
-Grid.prototype.tile = function (x,y) {
-	return this.tiles[x][y];
-}
-
-// return true if a tile has been created at grid location x,y
-Grid.prototype.tileExists = function (x,y) {
-	return (this.tiles[x][y] != null);
-}
-
-Grid.prototype.connector = function (x,y) {
-	var tile = this.tiles[x][y];
-	tile.connector();
-	this.connectors.push([x,y]);
-	this.unfinishedConnectors++;
-	// console.log("added connector",this.unfinishedConnectors);
-}
-
-Grid.prototype.connectorFinished = function () {
-	this.unfinishedConnectors--;
-	// console.log("finished connector",this.unfinishedConnectors);
-	if (this.unfinishedConnectors == 0) this.game.tilesReady();
-}
-
-Grid.prototype.node = function (x,y) {
-	var tile = this.tiles[x][y];
-	tile.node();
-	this.nodes.push([x,y]);
-	this.lit++;
-}
-
-Grid.prototype.fillInTheBlanks = function () {
-	var grid = this;
-
-	var tileFunction = function (x,y) {
-		if (!grid.tileExists(x,y)) grid.blankTile(x,y);
+	if (this.scaledImageLoadedCount == this.tileImageCount) {
+		if (!this.images_loaded()) return;
+		// console.log("all images loaded");
+		this.draw();
 	}
-
-	this.tiling.eachTile(tileFunction);
 }
 
-Grid.prototype.blankTile = function (x,y) {
-	console.log("blank tile @",x,y);
-	var tile = this.createTile(x,y);
-	tile.shape.blankTile(tile);
-}
-
-Grid.prototype.lightNode = function () {
-	this.lit++;
-}
-
-Grid.prototype.unlightNode = function () {
-	this.lit--;
-}
-
-Grid.prototype.newPath = function (path) {
-	this.paths.push(path);
-}
-
-Grid.prototype.shuffle = function () {
-	var affectedTiles = {};
-	var grid = this;
-
-	var requiredMoves = 0;
-
-	var tileFunction = function (x,y) {
-		// don't rotate sources for now~~~
-		//if (grid.tile(x,y).isSource) return;
-		var rotateBy = grid.tiling.randomRotation(x,y);
-		game_log("grid",2,"rotate",x,y,"by",rotateBy);
-		requiredMoves += grid.rotateTile(x,y,rotateBy,affectedTiles);
+Grid.prototype.images_loaded = function () {
+	var imagesLoaded = true;
+	for (var shapeId in this.shapes) {
+		if (!this.shapes[shapeId].images_loaded()) imagesLoaded = false;
 	}
-
-	this.tiling.eachTile(tileFunction);
-
-	// console.log("required moves",requiredMoves);
-	return requiredMoves;
+	return imagesLoaded;
 }
 
 Grid.prototype.draw = function () {
@@ -538,32 +535,32 @@ Grid.prototype.draw = function () {
 
 	for (var x = 0; x <= this.xMax; x++) {
 		for (var y = 0; y <= this.yMax; y++) {
-			this.drawTile(x,y,false);
+			this.draw_tile(x,y,false);
 		}
 	}
 
 	//this.drawn = true;
-	this.updateScreen();
+	this.update_screen();
 	this.game.gridReady();
 }
 
-Grid.prototype.drawTile = function (x,y,clear) {
+Grid.prototype.draw_tile = function (x,y,clear) {
 	if (clear == undefined) clear = true;
 	var tile = this.tiles[x][y];
 	if (tile == null) return;
-	var location = this.tiling.tileLocation(x,y);
+	var location = this.tiling.tile_location(this,x,y);
 	var xPixel = location[0];
 	var yPixel = location[1];
 
 	//console.log("draw tile",x,y,"@",xPixel,yPixel);
 
-	this.startDrawing();
+	this.start_drawing();
 	//tile.draw(xPixel,yPixel,clear);
 	tile.draw(xPixel,yPixel,true);
-	this.finishDrawing();
+	this.finish_drawing();
 	// restrict drawing to within the outer dimensions of the grid
 	// no longer necessary~~~
-	//this.startDrawing();
+	//this.start_drawing();
 	//this.context.beginPath();
 	//this.context.moveTo(this.outerDimensions.x1,this.outerDimensions.y1);
 	//this.context.lineTo(this.outerDimensions.x2,this.outerDimensions.y1);
@@ -575,17 +572,89 @@ Grid.prototype.drawTile = function (x,y,clear) {
 	//	var xPixel = xLocations[xIndex];
 	//	for (var yIndex in yLocations) {
 	//		var yPixel = yLocations[yIndex];
-			//console.log("drawTile",x,y,"at",xPixel,yPixel);
-	//		this.startDrawing();
+			//console.log("draw_tile",x,y,"at",xPixel,yPixel);
+	//		this.start_drawing();
 	//		tile.draw(xPixel,yPixel,clear);
-	//		this.finishDrawing();
+	//		this.finish_drawing();
 	//	}
 	//}
 
-	//this.finishDrawing();
+	//this.finish_drawing();
 }
 
-Grid.prototype.rotateTile = function (x,y,rotateBy,affectedTiles) {
+Grid.prototype.shuffle = function () {
+	var affectedTiles = {};
+	var grid = this;
+
+	var requiredMoves = 0;
+
+	var tileFunction = function (x,y) {
+		// don't rotate sources for now~~~
+		//if (grid.tile(x,y).isSource) return;
+		var rotateBy = grid.tiling.random_rotation(grid.shapes,x,y);
+		game_log("grid",2,"rotate",x,y,"by",rotateBy);
+		requiredMoves += grid.rotate_tile(x,y,rotateBy,affectedTiles);
+	}
+
+	this.tiling.each_tile(this.xMax, this.yMax, tileFunction);
+
+	// console.log("required moves",requiredMoves);
+	return requiredMoves;
+}
+
+Grid.prototype.tile_at = function (xPixel,yPixel) {
+	// x & y pixel are relative to the window, not the grid
+	// determine the grid-relative coords:
+	xPixel -= this.x;
+	yPixel -= this.y;
+
+	// check we are inside the grid
+	if (xPixel < 0)                        return []; // beyond the left edge
+	if (xPixel > this.xPixels)             return []; // beyond the right edge
+	if (yPixel < 0)                        return []; // beyond the top edge
+	if (yPixel > this.yPixels)             return []; // beyond the bottom edge
+
+	var location = this.tiling.tile_at(this, xPixel, yPixel);
+	if (location.length == 0) return [];
+	var x = location[0];
+	var y = location[1];
+	
+	x = modulo(x,(this.xMax + 1));
+	y = modulo(y,(this.yMax + 1));
+
+	return [x,y];
+}
+
+Grid.prototype.rotate_at = function (xPixel,yPixel,direction) {
+	var location = this.tile_at(xPixel, yPixel);
+	var x = location[0];
+	var y = location[1];
+	var tile = this.tiles[x][y];
+	console.log("tile clicked is ",tile);
+	// console.log("tile has "+tile.linkCount+" links");
+	// console.log("paths in & out",tile.paths_in(),tile.paths_out());
+	if (!ROTATE) return;
+
+	var affectedTiles = {};
+	var rotation = 1
+	if (direction == "anticlockwise") rotation = -1;
+
+	var rotatedBy = this.rotate_tile(x,y,rotation,affectedTiles);
+
+	// console.log("Rotated tile ",tile);
+
+	for (var tileX in affectedTiles) {
+		for (var tileY in affectedTiles[tileX]) {
+			this.draw_tile(parseInt(tileX),parseInt(tileY));
+		}
+	}
+
+	this.update_screen();
+
+	return (rotatedBy != 0);
+}
+
+Grid.prototype.rotate_tile = function (x,y,rotateBy,affectedTiles) {
 	var tile = this.tiles[x][y];    // tile object
 	rotateBy = rotateBy || 1;       // how many faces to rotate by, default is 1 clockwise
 
@@ -618,7 +687,7 @@ Grid.prototype.rotateTile = function (x,y,rotateBy,affectedTiles) {
 		if (tile.faces[direction].length == 0) continue;
 		// at least one link on this face
 
-		var neighbour = this.tiling.neighbour(x,y,direction);
+		var neighbour = this.neighbour(x,y,direction);
 		if (neighbour == null) continue;
 		var neighbourTile = this.tiles[neighbour.x][neighbour.y];
 		if (neighbourTile.faces[neighbour.direction].length == 0) continue;
@@ -670,25 +739,34 @@ Grid.prototype.scroll = function (direction) {
 	switch (direction) {
 		case "up":
 			if (!this.yContinuous) return;
-			this.yScroll++;
+			this.yScroll += this.tiling.y_scroll_increment();
 			break;
 		case "right":
 			if (!this.xContinuous) return;
-			this.xScroll--;
+			this.xScroll -= this.tiling.x_scroll_increment();
 			break;
 		case "down":
 			if (!this.yContinuous) return;
-			this.yScroll--;
+			this.yScroll -= this.tiling.y_scroll_increment();
 			break;
 		case "left":
 			if (!this.xContinuous) return;
-			this.xScroll++;
+			this.xScroll += this.tiling.x_scroll_increment();
 			break;
 	}
 
-	this.tiling.updateScroll();
-	this.drawScreen();
+	// can't scroll more than max x,y - wrap
+	this.xScroll = modulo(this.xScroll,this.xMax + 1);
+	this.yScroll = modulo(this.yScroll,this.yMax + 1);
+
+	// update x & y scroll pixel offsets
+	this.xScrollPixel = this.tiling.x_scroll_pixel(this.xScroll,this.tilePixels);
+	this.yScrollPixel = this.tiling.y_scroll_pixel(this.yScroll,this.tilePixels);
+
+	// update display
+	this.draw_screen();
 }
+
 
 Grid.prototype.find_unlit_node = function () {
 	var node;
@@ -704,7 +782,7 @@ Grid.prototype.find_unlit_node = function () {
 	// make the node "wink" - light it, wait a beat (200ms) then unlight it
 	// light the node up on screen
 	node.lit = true;
-	this.drawTile(x,y,true);
+	this.draw_tile(x,y,true);
 	this.updateScreen();
 
 	// restore correct lit value now
@@ -714,7 +792,7 @@ Grid.prototype.find_unlit_node = function () {
 	var grid = this;
 	var redraw_node = function () {
 		node.update_lit();
-		grid.drawTile(x,y,true);
+		grid.draw_tile(x,y,true);
 		grid.updateScreen();
 	}
 

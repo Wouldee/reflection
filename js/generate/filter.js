@@ -22,7 +22,7 @@ Game.prototype.create_prism = function (prismType) {
 	var direction = tile.shape.directions()[0];
 	while (prismForms == undefined) {
 		// check neighbouring tile
-		var neighbour = this.tiling.neighbour(x,y,direction);
+		var neighbour = this.grid.neighbour(x,y,direction);
 		x = neighbour.x;
 		y = neighbour.y;
 
@@ -37,7 +37,7 @@ Game.prototype.create_prism = function (prismType) {
 
 	// create the prism
 	// rotation~~~
-	var tile = this.grid.createTile(x,y);
+	var tile = this.grid.create_tile(x,y);
 	var form = prismForms[0];
 	tile.prism(form);
 	createdTiles.push(tile);
@@ -50,8 +50,8 @@ Game.prototype.create_prism = function (prismType) {
 		if (tile.faces[direction].length == 0) continue;
 
 		// create a neighbouring tile in this direction
-		var neighbour = this.tiling.neighbour(x,y,direction);
-		var newTile = this.grid.createTile(neighbour.x,neighbour.y);
+		var neighbour = this.grid.neighbour(x,y,direction);
+		var newTile = this.grid.create_tile(neighbour.x,neighbour.y);
 		var linkId = newTile.add_link();
 		newTile.add_to_link(linkId,direction);
 
@@ -78,7 +78,7 @@ Game.prototype.create_prism_source = function (colour,tile,leaveFreePath,newTile
 	var unusedFaces = [];
 	for (var direction in tile.faces) {
 		if (tile.faces[direction].length != 0) continue; // face is used
-		if (this.tiling.neighbour(tile.x,tile.y,direction) == null) continue; // edge of the grid
+		if (this.grid.neighbour(tile.x,tile.y,direction) == null) continue; // edge of the grid
 		unusedFaces.push(direction);
 	}
 
@@ -307,7 +307,7 @@ Game.prototype.add_prism = function (x, y, filteredPaths) {
 
 	// now add back the cut paths
 	for (var direction in cutPaths) {
-		var neighbour = this.grid.tiling.neighbour(tile.x, tile.y, direction);
+		var neighbour = this.grid.neighbour(tile.x, tile.y, direction);
 		if (neighbour == null) continue; // shouldn't happen? I think? ~~~
 		var neighbourTile = this.grid.tile(neighbour.x,neighbour.y);
 
@@ -476,7 +476,7 @@ Game.prototype.addFilter = function (x, y, filteredPaths) {
 
 			// Add back any paths from the neighbour
 			// Each path will use one of the new links, depending on colour
-			var neighbour = this.grid.tiling.neighbour(tile.x, tile.y, direction);
+			var neighbour = this.grid.neighbour(tile.x, tile.y, direction);
 			if (neighbour == null) continue; // shouldn't happen? I think? ~~~
 			var neighbourTile = this.grid.tile(neighbour.x,neighbour.y);
 

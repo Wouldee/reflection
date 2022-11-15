@@ -36,38 +36,26 @@ Hexagonal.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/4));
 }
 
-Hexagonal.prototype.newGrid = function (grid) {
-	return new HexagonalGrid(grid,this);
+// create sized shapes for a new grid
+Hexagonal.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.hexagon = this.hexagon.newHexagon(grid);
+	return shapes;
 }
 
-
-function HexagonalGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
+Hexagonal.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 4*grid.size - 1;
 	grid.yMax = 2*grid.size - 1;
-
-	this.calculateDimensions();
-	this.hexagon = this.tiling.hexagon.newHexagon(grid);
-	this.shapes = [this.hexagon];
-}
-
-HexagonalGrid.prototype = new TilingGrid();
-
-HexagonalGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 		tilePixels = 2*grid.yPixels/(6*grid.size + 1);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 		tilePixels = 2*grid.xPixels/(Q3*(4*grid.size + 1));
 	}
 	grid.tilePixels = tilePixels;
@@ -77,152 +65,84 @@ HexagonalGrid.prototype.calculateDimensions = function () {
 	grid.scrollHeight = grid.yPixels - tilePixels/2;
 
 	// calculate the location of every column and row for efficiency
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	for (var column = 0; column <= grid.xMax; column++) {
 		var columnLocation = Q3*(column + 1)*tilePixels/2;
-		this.columnLocations.push(columnLocation);
+		grid.columnLocations.push(columnLocation);
 	}
 
 	this.rowLocations = [];
 	for (var row = 0; row <= grid.xMax; row++) {
 		var rowLocation = (3*row + 2)*tilePixels/2;
-		this.rowLocations.push(rowLocation);
+		grid.rowLocations.push(rowLocation);
 	}
 }
 
-
-HexagonalGrid.prototype.resizeShapes = function () {
-	this.hexagon.resize();
+Hexagonal.prototype.shape = function (shapes, x, y) {
+	return shapes.hexagon;
 }
 
-HexagonalGrid.prototype.shape = function (x,y) {
-	return this.hexagon;
-}
-
-HexagonalGrid.prototype.orientation = function (x,y) {
+Hexagonal.prototype.orientation = function (x, y) {
 	return "standing";
 }
 
 // return random tile
 // hexagonal tiling x & y must both be even or both be odd
-HexagonalGrid.prototype.randomTile = function () {
-	var x = Math.floor(Math.random()*(this.grid.xMax + 1));
-	var y = 2*Math.floor(Math.random()*(this.grid.yMax + 1)/2) + modulo(x,2);
+Hexagonal.prototype.random_tile = function (maxX, maxY) {
+	var x = Math.floor(Math.random()*(maxX + 1));
+	var y = 2*Math.floor(Math.random()*(maxY + 1)/2) + modulo(x,2);
 	return [x,y];
 }
 
-HexagonalGrid.prototype.neighbour = function (x,y,direction) {
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: opposite_direction(direction)
-	}
-
+Hexagonal.prototype.neighbour = function (x,y,direction, gridSize) {
 	switch (direction) {
-		case "nne":
-			neighbour.x ++;
-			neighbour.y --;
-			if (neighbour.x > xMax) neighbour.x = 0;
-			if (neighbour.y < 0) neighbour.y = yMax;
-			break;
-		case "e":
-			neighbour.x += 2;
-			if (neighbour.x > xMax) neighbour.x = modulo(neighbour.x,xMax + 1);
-			break;
-		case "sse":
-			neighbour.x ++;
-			neighbour.y ++;
-			if (neighbour.x > xMax) neighbour.x = 0;
-			if (neighbour.y > yMax) neighbour.y = 0;
-			break;
-		case "ssw":
-			neighbour.x --;
-			neighbour.y ++;
-			if (neighbour.x < 0) neighbour.x = xMax;
-			if (neighbour.y > yMax) neighbour.y = 0;
-			break;
-		case "w":
-			neighbour.x -= 2;
-			if (neighbour.x < 0) neighbour.x = modulo(neighbour.x,xMax + 1);
-			break;
-		case "nnw":
-			neighbour.x --;
-			neighbour.y --;
-			if (neighbour.x < 0) neighbour.x = xMax;
-			if (neighbour.y < 0) neighbour.y = yMax;
-			break;
+		case "nne": x++;    y--; break;
+		case "e":   x += 2;      break;
+		case "sse": x++;    y++; break;
+		case "ssw": x--;    y++; break;
+		case "w":   x -= 2;      break;
+		case "nnw": x--;    y--; break;
 	}
 
-	return neighbour;
+	return [x,y];
 }
 
-HexagonalGrid.prototype.eachTile = function (tileFunction) {
-	for (var x = 0; x <= this.grid.xMax; x++) {
+Hexagonal.prototype.each_tile = function (maxX, maxY, tileFunction) {
+	for (var x = 0; x <= maxX; x++) {
 		var yInit = modulo(x,2) == 0 ? 0 : 1;
-		for (var y = yInit; y <= this.grid.yMax; y += 2) {
+		for (var y = yInit; y <= maxY; y += 2) {
 			tileFunction(x,y);
 		}
 	}
 }
 
 // return the x,y of the tile that the pixel position is inside of
-HexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var gridSize = this.grid.size;
-	var tileSize = this.grid.tilePixels;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
-	var x;
-	var y;
-
-	// check we are inside the grid
-	if (xPixel < 0)                   return []; // beyond the left edge
-	if (xPixel > xPixels)             return []; // beyond the right edge
-	if (yPixel < 0)                   return []; // beyond the top edge
-	if (yPixel > yPixels)             return []; // beyond the bottom edge
-
+Hexagonal.prototype.tile_at = function (grid, xPixel, yPixel) {
 	// to find out which hexagon the pixel is in, we need to take three measurements
 	// first is just the x location (tx)
 	// second is how far in from the top left corner, along the line given by y = x/sqrt(3) (ty)
 	// third is the reverse, i.e how far in from the top right corner along the line given by y = (width-x)/sqrt(3) (tz)
 	// this will narrow the location down to a triangle. Each hexagon in the grid is made of 6 such triangles
-	var xTriangle = Math.floor(2*xPixel/(Q3*tileSize) - xScroll);
-	var yTriangle = Math.floor((xPixel + Q3*yPixel)/(Q3*tileSize) - xScroll/2 - 3*yScroll/2 - 1/2);
-	var zTriangle = Math.floor((xPixels - xPixel + Q3*yPixel)/(Q3*tileSize) + xScroll/2 - 3*yScroll/2);
+	var xTriangle = Math.floor(2*xPixel/(Q3*grid.tilePixels) - grid.xScroll);
+	var yTriangle = Math.floor((xPixel + Q3*yPixel)/(Q3*grid.tilePixels) - grid.xScroll/2 - 3*grid.yScroll/2 - 1/2);
+	var zTriangle = Math.floor((grid.xPixels - xPixel + Q3*yPixel)/(Q3*grid.tilePixels) + grid.xScroll/2 - 3*grid.yScroll/2);
 	//console.log("triangles",xTriangle,yTriangle,zTriangle);
 
-
-	x = xTriangle;
-	y = Math.floor((yTriangle + zTriangle - 2*gridSize)/3);
+	var x = xTriangle;
+	var y = Math.floor((yTriangle + zTriangle - 2*grid.size)/3);
 	if (modulo(x,2) != modulo(y,2)) x--;
-
-	x = modulo(x,(xMax + 1));
-	y = modulo(y,(yMax + 1));
-	//console.log("tile is",x,y,"(",yTriangle,"+",zTriangle,"- 2 * ",gridSize,")");
 
 	return [x,y];
 }
 
-HexagonalGrid.prototype.updateScroll = function (direction) {
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
+// return the horizontal offset in pixels
+// based on the current scroll position
+Hexagonal.prototype.x_scroll_pixel = function (xScroll,tilePixels) {
+	return xScroll*Q3*tilePixels/2;
+}
 
-	xScroll = modulo(xScroll,this.grid.xMax + 1);
-	yScroll = modulo(yScroll,this.grid.yMax + 1);
-
-	var scrollCellSize = (Q3 + 1)*this.grid.tilePixels/2;
-	this.grid.xScrollPixel = xScroll*Q3*this.grid.tilePixels/2;
-	this.grid.yScrollPixel = yScroll*3*this.grid.tilePixels/2;
-
-	// console.log("scroll @",xScroll,yScroll,"pixel @ ",this.grid.xScrollPixel,this.grid.yScrollPixel);
-
-	this.grid.xScroll = xScroll;
-	this.grid.yScroll = yScroll;
+// return the vertical offset in pixels
+// based on the current scroll position
+Hexagonal.prototype.y_scroll_pixel = function (yScroll,tilePixels) {
+	return yScroll*3*tilePixels/2;
 }

@@ -28,38 +28,26 @@ TruncatedSquare.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/4));
 }
 
-TruncatedSquare.prototype.newGrid = function (grid) {
-	return new TruncatedSquareGrid(grid,this);
+TruncatedSquare.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.square = this.square.newSquare(grid);
+	shapes.octagon = this.octagon.newOctagon(grid);
+	return shapes;
 }
-
-function TruncatedSquareGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
-	grid.xMax = 2*grid.size - 1;
-	grid.yMax = 2*grid.size - 1;
-
-	this.calculateDimensions();
-	this.square = this.tiling.square.newSquare(grid);
-	this.octagon = this.tiling.octagon.newOctagon(grid);
-	this.shapes = [this.square,this.octagon];
-}
-
-TruncatedSquareGrid.prototype = new TilingGrid();
 
 // calculate the xPixels, yPixels, tilePixels column and row locations
-TruncatedSquareGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
+TruncatedSquare.prototype.calculate_dimensions = function (grid) {
+	grid.xMax = 2*grid.size - 1;
+	grid.yMax = 2*grid.size - 1;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 	}
 	tilePixels = Q2*grid.xPixels/(2*(Q2 + 1)*grid.size + 1);
 	grid.tilePixels = tilePixels;
@@ -68,145 +56,51 @@ TruncatedSquareGrid.prototype.calculateDimensions = function () {
 	grid.scrollWidth = grid.xPixels - tilePixels/Q2;
 	grid.scrollHeight = grid.yPixels - tilePixels/Q2;
 
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	// calculate the location of every column and row for efficiency
 	for (var column = 0; column <= grid.xMax; column++) {
 		var columnLocation = tilePixels*(column*(Q2 + 2) + Q2 + 1)/2;
-		this.columnLocations.push(columnLocation);
+		grid.columnLocations.push(columnLocation);
 	}
 
-	this.rowLocations = [];
+	grid.rowLocations = [];
 	for (var row = 0; row <= grid.yMax; row++) {
 		var rowLocation = tilePixels*(row*(Q2 + 2) + Q2 + 1)/2;
-		this.rowLocations.push(rowLocation);
+		grid.rowLocations.push(rowLocation);
 	}
 }
 
-TruncatedSquareGrid.prototype.resizeShapes = function () {
-	this.square.resize();
-	this.octagon.resize();
-}
-
-TruncatedSquareGrid.prototype.shape = function (x,y) {
+TruncatedSquare.prototype.shape = function (shapes, x, y) {
 	if (modulo(x + y,2) == 0) {
-		return this.octagon;
+		return shapes.octagon;
 	} else {
-		return this.square;
+		return shapes.square;
 	}
 }
 
-TruncatedSquareGrid.prototype.orientation = function (x,y) {
+TruncatedSquare.prototype.orientation = function (x, y) {
 	return "straight";
 }
 
-// odd-numbered columns only contain even rows (and vice-versa obv)
-// left&right triangles are in the odd rows
-// up&down triangles are in the odd columns
-TruncatedSquareGrid.prototype.randomTile = function () {
-	while (true) {
-		var x = Math.floor(Math.random()*(this.grid.xMax + 1));
-		var y = Math.floor(Math.random()*(this.grid.yMax + 1));
-		if (modulo(x,2) == 1 && modulo(y,2) == 1) continue;
-		break;
+TruncatedSquare.prototype.neighbour = function (x, y, direction, gridSize) {
+	switch (direction) {
+		case "nw": x--;	y--; break;
+		case "n":       y--; break;
+		case "ne": x++; y--; break;
+		case "e":  x++;      break;
+		case "se": x++; y++; break;
+		case "s":       y++; break;
+		case "sw": x--; y++; break;
+		case "w":  x--;      break;
 	}
+
 	return [x,y];
 }
 
-TruncatedSquareGrid.prototype.neighbour = function (x,y,direction) {
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: opposite_direction(direction)
-	}
-
-	switch (direction) {
-		case "nw":
-			neighbour.x--;
-			if (neighbour.x < 0) {
-				if (!this.grid.xContinuous) return null;
-				neighbour.x = this.grid.xMax;
-			}
-
-		case "n":
-			neighbour.y--;
-			if (neighbour.y < 0) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = this.grid.yMax;
-			}
-			break;
-
-		case "ne":
-			neighbour.y--;
-			if (neighbour.y < 0) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = this.grid.yMax;
-			}
-
-		case "e":
-			neighbour.x++;
-			if (neighbour.x > this.grid.xMax) {
-				if (!this.grid.xContinuous) return null;
-				neighbour.x = 0;
-			}
-			break;
-
-		case "se":
-			neighbour.x++;
-			if (neighbour.x > this.grid.xMax) {
-				if (!this.grid.xContinuous) return null;
-				neighbour.x = 0;
-			}
-		case "s":
-			neighbour.y++;
-			if (neighbour.y > this.grid.yMax) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = 0;
-			}
-			break;
-
-		case "sw":
-			neighbour.y++;
-			if (neighbour.y > this.grid.yMax) {
-				if (!this.grid.yContinuous) return null;
-				neighbour.y = 0;
-			}
-		case "w":
-			neighbour.x--;
-			if (neighbour.x < 0) {
-				if (!this.grid.xContinuous) return null;
-				neighbour.x = this.grid.xMax;
-			}
-			break;
-	}
-
-	return neighbour;
-}
-
 // return the x,y of the tile that the pixel position is inside of
-TruncatedSquareGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var gridSize = this.grid.size;
-	var tileSize = this.grid.tilePixels;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
-	var x;
-	var y;
-
-	// check we are inside the grid
-	if (xPixel < 0)                   return []; // beyond the left edge
-	if (xPixel > xPixels)             return []; // beyond the right edge
-	if (yPixel < 0)                   return []; // beyond the top edge
-	if (yPixel > yPixels)             return []; // beyond the bottom edge
-
+TruncatedSquare.prototype.tile_at = function (grid, xPixel, yPixel) {
 	// identify the column & row
-	var scrollCellSize = (1/Q2 + 1)*tileSize;
+	var scrollCellSize = (1/Q2 + 1)*grid.tilePixels;
 	var column = Math.floor(xPixel/scrollCellSize);
 	var row = Math.floor(yPixel/scrollCellSize);
 
@@ -217,27 +111,22 @@ TruncatedSquareGrid.prototype.tileAt = function (xPixel,yPixel) {
 	xPixel -= columnPixel;
 	yPixel -= rowPixel;
 
-	// apply scroll to row & column
-	//column = modulo(column - xScroll, 2*gridSize);
-	//row = modulo(row - yScroll, 2*gridSize);
-
-	x = column;
-	y = row;
+	var x = column;
+	var y = row;
 
 	// check whether the area contains a square or not
-
-	if (modulo(column - xScroll + row + yScroll, 2) == 0) {
+	if (modulo(column - grid.xScroll + row + grid.yScroll, 2) == 0) {
 		// no square
 		// cell almost entirely filled by one octagon
 		// top left corner is another octagon
-		if ((xPixel + yPixel) < tileSize/Q2) {
+		if ((xPixel + yPixel) < grid.tilePixels/Q2) {
 			x--;
 			y--;
 		}
 	} else {
 		// square in the bottom right corner
 		// octagon on the left, another at the top
-		if (xPixel > tileSize/Q2 && yPixel > tileSize/Q2) {
+		if (xPixel > grid.tilePixels/Q2 && yPixel > grid.tilePixels/Q2) {
 			// square
 		} else if (xPixel > yPixel) {
 			// top octagon
@@ -249,25 +138,20 @@ TruncatedSquareGrid.prototype.tileAt = function (xPixel,yPixel) {
 	}
 
 	//console.log("tile is",x,y);
-	x = modulo(x - xScroll,(xMax + 1));
-	y = modulo(y - yScroll,(yMax + 1));
+	x -= grid.xScroll;
+	y -= grid.yScroll;
 
 	return [x,y];
 }
 
-TruncatedSquareGrid.prototype.updateScroll = function (direction) {
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
+// return the horizontal offset in pixels
+// based on the current scroll position
+TruncatedSquare.prototype.x_scroll_pixel = function (xScroll, tilePixels) {
+	return xScroll*(1/Q2 + 1)*tilePixels;
+}
 
-	xScroll = modulo(xScroll,this.grid.xMax + 1);
-	yScroll = modulo(yScroll,this.grid.yMax + 1);
-
-	var scrollCellSize = (1/Q2 + 1)*this.grid.tilePixels;
-	this.grid.xScrollPixel = xScroll*scrollCellSize;
-	this.grid.yScrollPixel = yScroll*scrollCellSize;
-
-	// console.log("scroll @",xScroll,yScroll,"pixel @ ",this.grid.xScrollPixel,this.grid.yScrollPixel);
-
-	this.grid.xScroll = xScroll;
-	this.grid.yScroll = yScroll;
+// return the vertical offset in pixels
+// based on the current scroll position
+TruncatedSquare.prototype.y_scroll_pixel = function (yScroll, tilePixels) {
+	return yScroll*(1/Q2 + 1)*tilePixels;
 }

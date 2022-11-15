@@ -33,39 +33,28 @@ RhombiTriHexagonal.prototype.closest_size = function (tiles) {
 	return Math.round(Math.sqrt(tiles/24));
 }
 
-RhombiTriHexagonal.prototype.newGrid = function (grid) {
-	return new RhombiTriHexagonalGrid(grid,this);
+// create sized shapes for a new grid
+RhombiTriHexagonal.prototype.shapes = function (grid) {
+	var shapes = {};
+	shapes.triangle = this.triangle.newTriangle(grid);
+	shapes.square = this.square.newSquare(grid);
+	shapes.hexagon = this.hexagon.newHexagon(grid);
+	return shapes;
 }
 
-function RhombiTriHexagonalGrid (grid,tiling) {
-	this.grid = grid;
-	this.tiling = tiling;
-
+RhombiTriHexagonal.prototype.calculate_dimensions = function (grid) {
 	grid.xMax = 8*grid.size - 1;
 	grid.yMax = 4*grid.size - 1;
-
-	this.calculateDimensions();
-	this.triangle = this.tiling.triangle.newTriangle(grid);
-	this.square = this.tiling.square.newSquare(grid);
-	this.hexagon = this.tiling.hexagon.newHexagon(grid);
-	this.shapes = [this.triangle,this.square,this.hexagon];
-}
-
-RhombiTriHexagonalGrid.prototype = new TilingGrid();
-
-RhombiTriHexagonalGrid.prototype.calculateDimensions = function () {
-	var grid = this.grid;
-	var tiling = this.tiling;
 
 	// determine the size of each tile edge
 	// and whether we use the width or the height of the available space
 	var tilePixels;
-	if (tiling.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
+	if (this.x_pixels(grid.yPixels,grid.size) < grid.xPixels) {
 		// tile size is restricted by the screen height
-		grid.xPixels = tiling.x_pixels(grid.yPixels,grid.size);
+		grid.xPixels = this.x_pixels(grid.yPixels,grid.size);
 		tilePixels = 2*grid.yPixels/(2*grid.size*(Q3 + 3) + 1);
 	} else {
-		grid.yPixels = tiling.y_pixels(grid.xPixels,grid.size);
+		grid.yPixels = this.y_pixels(grid.xPixels,grid.size);
 		tilePixels = 2*grid.xPixels/(4*grid.size*(Q3 + 1) + Q3);
 	}
 	grid.tilePixels = tilePixels;
@@ -76,49 +65,43 @@ RhombiTriHexagonalGrid.prototype.calculateDimensions = function () {
 	grid.scrollHeight = grid.yPixels - tilePixels/2;
 
 	// this.columnLocations = {hexagon: {standing: []}, square: {straight: [], right: [], left: []}, triangle: {up: [], down: []}};
-	this.columnLocations = [];
+	grid.columnLocations = [];
 	for (var column = 0; column <= grid.xMax; column++) {
 		var columnWidth = (Q3 + 1)*tilePixels/4;
 		var columnLocation = column*columnWidth + Q3*tilePixels/2;
-		this.columnLocations.push(columnLocation);
+		grid.columnLocations.push(columnLocation);
 
 		// even-numbered columns contain hexagons, straight squares and triangles
 		// right and left squares are in the odd-numbered columns
 	}
 
-	this.rowLocations = {hexagon: {standing: []}, square: {straight: [], right: [], left: []}, triangle: {up: [], down: []}};
+	grid.rowLocations = {hexagon: {standing: []}, square: {straight: [], right: [], left: []}, triangle: {up: [], down: []}};
 	for (var row = 0; row <= grid.yMax; row++) {
 		var rowLocation = tilePixels*(row*(Q3 + 3)/4 + 1);
 
-		this.rowLocations.hexagon.standing.push(rowLocation);
-		this.rowLocations.square.straight.push(rowLocation);
-		this.rowLocations.square.right.push(rowLocation);
-		this.rowLocations.square.left.push(rowLocation);
-		this.rowLocations.triangle.up.push(rowLocation + tilePixels*(Q3 - 1)/Q3);
-		this.rowLocations.triangle.down.push(rowLocation - tilePixels*(Q3 - 1)/Q3);
+		grid.rowLocations.hexagon.standing.push(rowLocation);
+		grid.rowLocations.square.straight.push(rowLocation);
+		grid.rowLocations.square.right.push(rowLocation);
+		grid.rowLocations.square.left.push(rowLocation);
+		grid.rowLocations.triangle.up.push(rowLocation + tilePixels*(Q3 - 1)/Q3);
+		grid.rowLocations.triangle.down.push(rowLocation - tilePixels*(Q3 - 1)/Q3);
 	}
 }
 
-RhombiTriHexagonalGrid.prototype.resizeShapes = function () {
-	this.triangle.resize();
-	this.square.resize();
-	this.hexagon.resize();
-}
-
 // hexagons in the odd-numbered rows
-RhombiTriHexagonalGrid.prototype.shape = function (x,y) {
+RhombiTriHexagonal.prototype.shape = function (shapes, x, y) {
 	if (modulo(x,2) == 1 || modulo(x + y,4) == 2) {
-		return this.square;
+		return shapes.square;
 	} else if (modulo(x + y,4) == 0) {
-		return this.hexagon;
+		return shapes.hexagon;
 	} else {
-		return this.triangle;
+		return shapes.triangle;
 	}
 }
 
 // all hexagons are flat
 // up and down triangles alternate
-RhombiTriHexagonalGrid.prototype.orientation = function (x,y) {
+RhombiTriHexagonal.prototype.orientation = function (x, y) {
 	if (modulo(x,2) == 1 || modulo(x + y,4) == 2) {
 		if (modulo(y,2) == 0) {
 			return "straight";
@@ -139,151 +122,84 @@ RhombiTriHexagonalGrid.prototype.orientation = function (x,y) {
 }
 
 // odd numbered rows only use every second column
-RhombiTriHexagonalGrid.prototype.randomTile = function () {
+RhombiTriHexagonal.prototype.random_tile = function (maxX, maxY) {
 	while (true) {
-		var x = Math.floor(Math.random()*(this.grid.xMax + 1));
-		var y = Math.floor(Math.random()*(this.grid.yMax + 1));
+		var x = Math.floor(Math.random()*(maxX + 1));
+		var y = Math.floor(Math.random()*(maxY + 1));
 		if (modulo(x,2) == 1 && modulo(y,2) == 0) continue;
 		break;
 	}
 	return [x,y];
 }
 
-RhombiTriHexagonalGrid.prototype.neighbour = function (x,y,direction) {
-	var neighbour = {
-		x: x,
-		y: y,
-		direction: opposite_direction(direction)
-	}
-
+RhombiTriHexagonal.prototype.neighbour = function (x, y, direction, gridSize) {
 	switch (direction) {
-		case "n":
-			neighbour.y--;
-			if (neighbour.y < 0) neighbour.y = this.grid.yMax;
-			break;
-		case "nne":
-			neighbour.x++;
-			neighbour.y--;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			if (neighbour.y < 0) neighbour.y = this.grid.yMax;
-			break;
-		case "nee":
-			neighbour.x++;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			break;
-		case "e": 
-			neighbour.x+=2;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			break;
-		case "see":
-			neighbour.x++;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			break;
-		case "sse":
-			neighbour.x++;
-			neighbour.y++;
-			if (neighbour.x > this.grid.xMax) neighbour.x = 0;
-			if (neighbour.y > this.grid.yMax) neighbour.y = 0;
-			break;
-		case "s":
-			neighbour.y++;
-			if (neighbour.y > this.grid.yMax) neighbour.y = 0;
-			break;
-		case "ssw":
-			neighbour.x--;
-			neighbour.y++;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax;
-			if (neighbour.y > this.grid.yMax) neighbour.y = 0;
-			break;
-		case "sww":
-			neighbour.x--;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax;
-			break;
-		case "w":
-			neighbour.x-=2;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax - 1;
-			break;
-		case "nww":
-			neighbour.x--;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax;
-			break;
-		case "nnw":
-			neighbour.x--;
-			neighbour.y--;
-			if (neighbour.x < 0) neighbour.x = this.grid.xMax;
-			if (neighbour.y < 0) neighbour.y = this.grid.yMax;
-			break;
+		case "n":           y--; break;
+		case "nne": x++;    y--; break;
+		case "nee": x++;         break;
+		case "e":   x += 2;      break;
+		case "see": x++;         break;
+		case "sse": x++;    y++; break;
+		case "s":           y++; break;
+		case "ssw": x--;    y++; break;
+		case "sww": x--;         break;
+		case "w":   x -= 2;      break;
+		case "nww": x--;         break;
+		case "nnw": x--;    y--; break;
 	}
 
-	//console.log("neighbour of",x,y,direction,"is",neighbour.x,neighbour.y,neighbour.direction);
-	return neighbour;
+	return [x,y];
 }
 
-RhombiTriHexagonalGrid.prototype.eachTile = function (tileFunction) {
-	for (var y = 0; y <= this.grid.yMax; y ++) {
+RhombiTriHexagonal.prototype.each_tile = function (maxX, maxY, tileFunction) {
+	for (var y = 0; y <= maxY; y ++) {
 		var xIncr = modulo(y,2) == 1 ? 1 : 2;
-		for (var x = 0; x <= this.grid.xMax; x += xIncr) {
+		for (var x = 0; x <= maxX; x += xIncr) {
 			tileFunction(x,y);
 		}
 	}
 }
 
-RhombiTriHexagonalGrid.prototype.tileLocation = function (x,y,rotation) {
-	var shape = this.shape(x,y);
+RhombiTriHexagonal.prototype.tile_location = function (grid, x, y) {
+	var shape = this.shape(grid.shapes,x,y);
 	var orientation = this.orientation(x,y);
 
 	// get pixels based on row and column
-	var xPixel = this.columnLocations[x];
-	var yPixel = this.rowLocations[shape.name][orientation][y];
+	var xPixel = grid.columnLocations[x];
+	var yPixel = grid.rowLocations[shape.name][orientation][y];
 
 	return [xPixel,yPixel];
 }
 
 // return the x,y of the tile that the pixel position is inside of
-RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
-	var gridSize = this.grid.size;
-	var tileSize = this.grid.tilePixels;
-	var xPixels = this.grid.xPixels;
-	var yPixels = this.grid.yPixels;
-	var xMax = this.grid.xMax;
-	var yMax = this.grid.yMax;
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
-
+RhombiTriHexagonal.prototype.tile_at = function (grid, xPixel, yPixel) {
 	var x;
 	var y;
 
-	// check we are inside the grid
-	if (xPixel < 0)                   return []; // beyond the left edge
-	if (xPixel > xPixels)             return []; // beyond the right edge
-	if (yPixel < 0)                   return []; // beyond the top edge
-	if (yPixel > yPixels)             return []; // beyond the bottom edge
-
 	// divide the grid into triangles, defined by tx, ty and tz
-	var triangleSize = tileSize*(Q3 + 1)/Q3;
-	var triangleHeight = tileSize*(Q3 + 1)/2;
+	var triangleSize = grid.tilePixels*(Q3 + 1)/Q3;
+	var triangleHeight = grid.tilePixels*(Q3 + 1)/2;
 
 	// determine the x,y,z of the triangle
 	// x is which column, i.e distance from left side
-	var xTrianglePixel = xTrianglePixel = xPixel + tileSize/2 - xScroll*triangleHeight;
+	var xTrianglePixel = xTrianglePixel = xPixel + grid.tilePixels/2 - grid.xScroll*triangleHeight;
 	var xTriangle = Math.floor(xTrianglePixel/triangleHeight);
 
 	// y is distance from the top left corner
-	var yTrianglePixel = yPixel + xPixel/Q3 + tileSize*(2 - Q3)/(2*Q3);
-	yTrianglePixel -= yScroll*triangleSize*3/4 + xScroll*triangleSize/2;
+	var yTrianglePixel = yPixel + xPixel/Q3 + grid.tilePixels*(2 - Q3)/(2*Q3);
+	yTrianglePixel -= grid.yScroll*triangleSize*3/4 + grid.xScroll*triangleSize/2;
 	var yTriangle = Math.floor(yTrianglePixel/triangleSize);
 
 	// z is distance from top right corner
-	var zTrianglePixel = yPixel + (xPixels - xPixel)/Q3 + tileSize/Q3;
-	zTrianglePixel -= yScroll*triangleSize*3/4 - xScroll*triangleSize/2;
+	var zTrianglePixel = yPixel + (grid.xPixels - xPixel)/Q3 + grid.tilePixels/Q3;
+	zTrianglePixel -= grid.yScroll*triangleSize*3/4 - grid.xScroll*triangleSize/2;
 	var zTriangle = Math.floor(zTrianglePixel/triangleSize);
-	//console.log("triangle @",xTriangle,yTriangle,zTriangle);
 
 	// now find the x y of the hexagon closest to the click
 	// and in which of the six triangles centred around the hexagon (sector)
 	var sector = "";
 	//y = modulo(2*Math.floor((yTriangle + zTriangle - 2*gridSize)/3),yMax + 1);
-	y = 2*Math.floor((yTriangle + zTriangle - 2*gridSize)/3);
+	y = 2*Math.floor((yTriangle + zTriangle - 2*grid.size)/3);
 	if (modulo(y,4) == 0) {
 		//x = modulo(4*Math.floor(xTriangle/2),xMax + 1);
 		x = 4*Math.floor(xTriangle/2);
@@ -294,20 +210,21 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 		sector += (modulo(xTriangle,2) == 0 ? "1" : "0");
 	}
 	sector += "-";
-	sector += modulo(yTriangle + zTriangle - 2*gridSize,3);
+	sector += modulo(yTriangle + zTriangle - 2*grid.size,3);
 	//console.log("sector",sector);
 
 	// centre of the hexagon
-	var columnWidth = (Q3 + 1)*tileSize/4;
-	var xHexagonCentre = x*columnWidth + Q3*tileSize/2;
-	var yHexagonCentre = tileSize*(y*(Q3 + 3)/4 + 1);
+	var columnWidth = (Q3 + 1)*grid.tilePixels/4;
+	var xHexagonCentre = x*columnWidth + Q3*grid.tilePixels/2;
+	var yHexagonCentre = grid.tilePixels*(y*(Q3 + 3)/4 + 1);
 
-	xHexagonCentre += xScroll*tileSize*(Q3 + 1)/2;
-	yHexagonCentre += yScroll*tileSize*(Q3 + 3)/4;
+	xHexagonCentre += grid.xScroll*grid.tilePixels*(Q3 + 1)/2;
+	yHexagonCentre += grid.yScroll*grid.tilePixels*(Q3 + 3)/4;
 	//console.log("closest hexagon is",x,y,"@",xHexagonCentre,yHexagonCentre);
 
-	this.grid.xScrollPixel = xScroll*this.grid.tilePixels*(Q3 + 1)/2;
-	this.grid.yScrollPixel = yScroll*this.grid.tilePixels*(Q3 + 3)/4;
+	// delete~~~
+	// grid.xScrollPixel = grid.xScroll*this.grid.tilePixels*(Q3 + 1)/2;
+	// grid.yScrollPixel = grid.yScroll*this.grid.tilePixels*(Q3 + 3)/4;
 
 	xPixel -= xHexagonCentre;
 	yPixel -= yHexagonCentre;
@@ -316,13 +233,13 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 	switch (sector) {
 		case "0-0":
 			// nw
-			if (yPixel + xPixel/Q3 < 0 - tileSize) {
+			if (yPixel + xPixel/Q3 < 0 - grid.tilePixels) {
 				// not the hexagon
 				y--;
-				if (yPixel - Q3*xPixel > tileSize) {
+				if (yPixel - Q3*xPixel > grid.tilePixels) {
 					// up triangle
 					x-=2;
-				} else if (yPixel - Q3*xPixel > 0 - tileSize) {
+				} else if (yPixel - Q3*xPixel > 0 - grid.tilePixels) {
 					// square
 					x--;
 				}
@@ -331,13 +248,13 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 			break;
 		case "0-1":
 			// w
-			if (xPixel < 0 - Q3*tileSize/2) {
+			if (xPixel < 0 - Q3*grid.tilePixels/2) {
 				// not the hexagon
 				x-=2;
-				if (yPixel < 0 - tileSize/2) {
+				if (yPixel < 0 - grid.tilePixels/2) {
 					// up triangle
 					y--;
-				} else if (yPixel > tileSize/2) {
+				} else if (yPixel > grid.tilePixels/2) {
 					// down triangle
 					y++;
 				}
@@ -346,13 +263,13 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 			break;
 		case "0-2":
 			// sw
-			if (yPixel - xPixel/Q3 > tileSize) {
+			if (yPixel - xPixel/Q3 > grid.tilePixels) {
 				// not the hexagon
 				y++;
-				if (yPixel + Q3*xPixel < 0 - tileSize) {
+				if (yPixel + Q3*xPixel < 0 - grid.tilePixels) {
 					// down triangle
 					x-=2;
-				} else if (yPixel + Q3*xPixel < tileSize) {
+				} else if (yPixel + Q3*xPixel < grid.tilePixels) {
 					// square
 					x--;
 				}
@@ -361,13 +278,13 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 			break;
 		case "1-0":
 			// ne
-			if (yPixel - xPixel/Q3 < 0 - tileSize) {
+			if (yPixel - xPixel/Q3 < 0 - grid.tilePixels) {
 				// not the hexagon
 				y--;
-				if (yPixel + Q3*xPixel > tileSize) {
+				if (yPixel + Q3*xPixel > grid.tilePixels) {
 					// up triangle
 					x+=2;
-				} else if (yPixel + Q3*xPixel > (0 - tileSize)) {
+				} else if (yPixel + Q3*xPixel > (0 - grid.tilePixels)) {
 					// square
 					x++;
 				}
@@ -376,13 +293,13 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 			break;
 		case "1-1":
 			// e
-			if (xPixel > Q3*tileSize/2) {
+			if (xPixel > Q3*grid.tilePixels/2) {
 				// not the hexagon
 				x+=2;
-				if (yPixel < 0 - tileSize/2) {
+				if (yPixel < 0 - grid.tilePixels/2) {
 					// up triangle
 					y--;
-				} else if (yPixel > tileSize/2) {
+				} else if (yPixel > grid.tilePixels/2) {
 					// down triangle
 					y++;
 				}
@@ -391,13 +308,13 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 			break;
 		case "1-2":
 			// se
-			if (yPixel + xPixel/Q3 > tileSize) {
+			if (yPixel + xPixel/Q3 > grid.tilePixels) {
 				// not the hexagon
 				y++;
-				if (yPixel - Q3*xPixel < 0 - tileSize) {
+				if (yPixel - Q3*xPixel < 0 - grid.tilePixels) {
 					// down triangle
 					x+=2;
-				} else if (yPixel - Q3*xPixel < tileSize) {
+				} else if (yPixel - Q3*xPixel < grid.tilePixels) {
 					// square
 					x++;
 				}
@@ -406,23 +323,17 @@ RhombiTriHexagonalGrid.prototype.tileAt = function (xPixel,yPixel) {
 			break;
 	}
 
-	x = modulo(x,(xMax + 1));
-	y = modulo(y,(yMax + 1));
-	//console.log("tile @",x,y);
-
 	return [x,y];
 }
 
-RhombiTriHexagonalGrid.prototype.updateScroll = function () {
-	var xScroll = this.grid.xScroll;
-	var yScroll = this.grid.yScroll;
+// return the horizontal offset in pixels
+// based on the current scroll position
+RhombiTriHexagonal.prototype.x_scroll_pixel = function (xScroll,tilePixels) {
+	return xScroll*tilePixels*(Q3 + 1)/2;
+}
 
-	xScroll = modulo(xScroll,this.grid.xMax + 1);
-	yScroll = modulo(yScroll,this.grid.yMax + 1);
-
-	this.grid.xScrollPixel = xScroll*this.grid.tilePixels*(Q3 + 1)/2;
-	this.grid.yScrollPixel = yScroll*this.grid.tilePixels*(Q3 + 3)/4;
-
-	this.grid.xScroll = xScroll;
-	this.grid.yScroll = yScroll;
+// return the vertical offset in pixels
+// based on the current scroll position
+RhombiTriHexagonal.prototype.y_scroll_pixel = function (yScroll,tilePixels) {
+	return yScroll*tilePixels*(Q3 + 3)/4;
 }
